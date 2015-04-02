@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Microsoft.AspNet.Http;
+using Microsoft.AspNet.Mvc.Core;
 using Microsoft.Framework.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
@@ -16,8 +17,8 @@ namespace Microsoft.AspNet.Mvc
     /// </summary>
     public class SessionStateTempDataProvider : ITempDataProvider
     {
-        private static JsonSerializer jsonSerializer = new JsonSerializer();
-        private static string TempDataSessionStateKey = "__ControllerTempData";
+        private string TempDataSessionStateKey = "__ControllerTempData";
+        private JsonSerializer jsonSerializer = new JsonSerializer();
 
         /// <inheritdoc />
         public virtual IDictionary<string, object> LoadTempData([NotNull] HttpContext context)
@@ -59,6 +60,9 @@ namespace Microsoft.AspNet.Mvc
             var hasValues = (values != null && values.Count > 0);
             if (hasValues)
             {
+                // We want to allow only primitive types to be serialized in session.
+                EnsureObjectCanBeSerialized(values);
+
                 // Accessing Session property will throw if the session middleware is not enabled.
                 var session = context.Session;
                 
@@ -76,9 +80,39 @@ namespace Microsoft.AspNet.Mvc
             }
         }
 
-        private static bool IsSessionEnabled(HttpContext context)
+        private bool IsSessionEnabled(HttpContext context)
         {
             return context.GetFeature<ISessionFeature>() != null;
+        }
+
+        private void EnsureObjectCanBeSerialized(IDictionary<string, object> values)
+        {
+            foreach (var item in values.Values)
+            {
+                var itemType = item.GetType();
+                Type[] actualTypes = null;
+
+                if (itemType.IsArray)
+                {
+                    itemType = itemType.GetElementType();
+                }
+                else if (TypeHelper.IsCollectionType(itemType))
+                {
+                    actualTypes = itemType.GetGenericArguments();
+                }
+
+                actualTypes = actualTypes ?? new Type[] { itemType };
+
+                foreach (var actualType in actualTypes)
+                {
+                    var underlyingType = Nullable.GetUnderlyingType(actualType) ?? actualType;
+                    if (!TypeHelper.IsSimpleType(actualType))
+                    {
+                        var message = Resources.FormatTempData_CannotSerializeToSession(underlyingType);
+                        throw new InvalidOperationException(message);
+                    }
+                }
+            }
         }
     }
 }

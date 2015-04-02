@@ -76,6 +76,44 @@ namespace Microsoft.AspNet.Mvc
             });
         }
 
+        [Theory]
+        [MemberData(nameof(InvalidTypes))]
+        public void Save_InvalidType_Throws(string key, object value, Type type)
+        {
+            // Arrange
+            var testProvider = new SessionStateTempDataProvider();
+
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() =>
+            {
+                testProvider.SaveTempData(
+                    GetHttpContext(session: null, sessionEnabled: false),
+                    new Dictionary<string, object> { { key, value } }
+                );
+            });
+            Assert.Equal(string.Format("The type {0} cannot be serialized to Session.", type), exception.Message);
+        }
+
+        public static TheoryData<string, object, Type> InvalidTypes
+        {
+            get
+            {
+                return new TheoryData<string, object, Type>
+                {
+                    { "Object", new object(), typeof(object) },
+                    { "ObjectArray", new object[3], typeof(object) },
+                    { "TestItem", new TestItem(), typeof(TestItem) },
+                    { "ListTestItem", new List<TestItem>(), typeof(TestItem) },
+                    { "DictTestItem", new Dictionary<string, TestItem>(), typeof(TestItem) }
+                };
+            }
+        }
+
+        private class TestItem
+        {
+            public int DummyInt { get; set; }
+        }
+
         private HttpContext GetHttpContext(ISessionCollection session, bool sessionEnabled=true)
         {
             var httpContext = new Mock<HttpContext>();

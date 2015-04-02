@@ -451,4 +451,7 @@
   <data name="ModelType_WrongType" xml:space="preserve">
     <value>The model's runtime type '{0}' is not assignable to the type '{1}'.</value>
   </data>
+  <data name="TempData_CannotSerializeToSession" xml:space="preserve">
+    <value>The type {0} cannot be serialized to Session.</value>
+  </data>
 </root>

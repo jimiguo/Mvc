@@ -1738,6 +1738,22 @@ namespace Microsoft.AspNet.Mvc.Core
             return string.Format(CultureInfo.CurrentCulture, GetString("ModelType_WrongType"), p0, p1);
         }
 
+        /// <summary>
+        /// The type {0} cannot be serialized to Session.
+        /// </summary>
+        internal static string TempData_CannotSerializeToSession
+        {
+            get { return GetString("TempData_CannotSerializeToSession"); }
+        }
+
+        /// <summary>
+        /// The type {0} cannot be serialized to Session.
+        /// </summary>
+        internal static string FormatTempData_CannotSerializeToSession(object p0)
+        {
+            return string.Format(CultureInfo.CurrentCulture, GetString("TempData_CannotSerializeToSession"), p0);
+        }
+
         private static string GetString(string name, params string[] formatterNames)
         {
             var value = _resourceManager.GetString(name);
