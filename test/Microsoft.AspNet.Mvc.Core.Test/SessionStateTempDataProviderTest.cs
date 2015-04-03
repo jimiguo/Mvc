@@ -76,9 +76,26 @@ namespace Microsoft.AspNet.Mvc
             });
         }
 
+        public static TheoryData<object, Type> InvalidTypes
+        {
+            get
+            {
+                return new TheoryData<object, Type>
+                {
+                    { new object(), typeof(object) },
+                    { new object[3], typeof(object) },
+                    { new TestItem(), typeof(TestItem) },
+                    { new List<TestItem>(), typeof(TestItem) },
+                    { new Dictionary<string, TestItem>(), typeof(TestItem) },
+                    { new Dictionary<object, string>(), typeof(object) },
+                    { new Dictionary<TestItem, TestItem>(), typeof(TestItem) }
+                };
+            }
+        }
+
         [Theory]
         [MemberData(nameof(InvalidTypes))]
-        public void EnsureObjectCanBeSerialized_InvalidType_Throws(string key, object value, Type type)
+        public void EnsureObjectCanBeSerialized_InvalidType_Throws(object value, Type type)
         {
             // Arrange
             var testProvider = new SessionStateTempDataProvider();
@@ -86,53 +103,42 @@ namespace Microsoft.AspNet.Mvc
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
             {
-                testProvider.EnsureObjectCanBeSerialized(new Dictionary<string, object> { { key, value } });
+                testProvider.EnsureObjectCanBeSerialized(value);
             });
             Assert.Equal($"The type {type} cannot be serialized to Session by '{typeof(SessionStateTempDataProvider).FullName}'.",
                 exception.Message);
         }
 
+        public static TheoryData<object> ValidTypes
+        {
+            get
+            {
+                return new TheoryData<object>
+                {
+                    { 10 },
+                    { new int[]{ 10, 20 } },
+                    { "FooValue" },
+                    { new Dictionary<string, int>() },
+                    { new Uri("http://Foo") },
+                    { Guid.NewGuid() },
+                    { new List<string> { "foo", "bar" } },
+                    { new DateTimeOffset() },
+                    { 100.1m },
+                    { new Dictionary<Uri, Guid>() },
+                    { new Uri[] { new Uri("http://Foo"), new Uri("http://Bar") } }
+                };
+            }
+        }
+
         [Theory]
         [MemberData(nameof(ValidTypes))]
-        public void EnsureObjectCanBeSerialized_ValidType_DoesNotThrow(string key, object value)
+        public void EnsureObjectCanBeSerialized_ValidType_DoesNotThrow(object value)
         {
             // Arrange
             var testProvider = new SessionStateTempDataProvider();
 
             // Act & Assert (Does not throw)
-            testProvider.EnsureObjectCanBeSerialized(new Dictionary<string, object> { { key, value } });
-        }
-
-        public static TheoryData<string, object, Type> InvalidTypes
-        {
-            get
-            {
-                return new TheoryData<string, object, Type>
-                {
-                    { "Object", new object(), typeof(object) },
-                    { "ObjectArray", new object[3], typeof(object) },
-                    { "TestItem", new TestItem(), typeof(TestItem) },
-                    { "ListTestItem", new List<TestItem>(), typeof(TestItem) },
-                    { "DictTestItem", new Dictionary<string, TestItem>(), typeof(TestItem) }
-                };
-            }
-        }
-
-        public static TheoryData<string, object> ValidTypes
-        {
-            get
-            {
-                return new TheoryData<string, object>
-                {
-                    { "int", 10 },
-                    { "IntArray", new int[]{ 10, 20 } },
-                    { "string", "FooValue" },
-                    { "SimpleDict", new Dictionary<string, int>() },
-                    { "Uri", new Uri("http://Foo") },
-                    { "Guid", Guid.NewGuid() },
-                    { "SimpleList", new List<string> { "foo", "bar" } }
-                };
-            }
+            testProvider.EnsureObjectCanBeSerialized(value);
         }
 
         private class TestItem

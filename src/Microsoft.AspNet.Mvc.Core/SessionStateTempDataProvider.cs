@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.Framework.Internal;
@@ -64,8 +65,11 @@ namespace Microsoft.AspNet.Mvc
             var hasValues = (values != null && values.Count > 0);
             if (hasValues)
             {
-                // We want to allow only simple types to be serialized in session.
-                EnsureObjectCanBeSerialized(values);
+                foreach (var item in values.Values)
+                {
+                    // We want to allow only simple types to be serialized in session.
+                    EnsureObjectCanBeSerialized(item);
+                }
 
                 // Accessing Session property will throw if the session middleware is not enabled.
                 var session = context.Session;
@@ -84,42 +88,39 @@ namespace Microsoft.AspNet.Mvc
             }
         }
 
-        private bool IsSessionEnabled(HttpContext context)
+        private static bool IsSessionEnabled(HttpContext context)
         {
             return context.GetFeature<ISessionFeature>() != null;
         }
 
-        internal void EnsureObjectCanBeSerialized(IDictionary<string, object> values)
+        internal void EnsureObjectCanBeSerialized(object item)
         {
-            foreach (var item in values.Values)
+            var itemType = item.GetType();
+            Type[] actualTypes = null;
+
+            if (itemType.IsArray)
             {
-                var itemType = item.GetType();
-                Type[] actualTypes = null;
-
-                if (itemType.IsArray)
+                itemType = itemType.GetElementType();
+            }
+            else if (itemType.GetTypeInfo().IsGenericType)
+            {
+                if (itemType.ExtractGenericInterface(typeof(IList<>)) != null ||
+                    itemType.ExtractGenericInterface(typeof(IDictionary<,>)) != null)
                 {
-                    itemType = itemType.GetElementType();
+                    actualTypes = itemType.GetGenericArguments();
                 }
-                else if (itemType.IsGenericType)
-                {
-                    if (itemType.ExtractGenericInterface(typeof(IList<>)) != null ||
-                        itemType.ExtractGenericInterface(typeof(IDictionary<,>)) != null)
-                    {
-                        actualTypes = itemType.GetGenericArguments();
-                    }
-                }
+            }
 
-                actualTypes = actualTypes ?? new Type[] { itemType };
+            actualTypes = actualTypes ?? new Type[] { itemType };
 
-                foreach (var actualType in actualTypes)
+            foreach (var actualType in actualTypes)
+            {
+                var underlyingType = Nullable.GetUnderlyingType(actualType) ?? actualType;
+                if (!TypeHelper.IsSimpleType(actualType))
                 {
-                    var underlyingType = Nullable.GetUnderlyingType(actualType) ?? actualType;
-                    if (!TypeHelper.IsSimpleType(actualType))
-                    {
-                        var message = Resources.FormatTempData_CannotSerializeToSession(underlyingType,
-                            typeof(SessionStateTempDataProvider).FullName);
-                        throw new InvalidOperationException(message);
-                    }
+                    var message = Resources.FormatTempData_CannotSerializeToSession(underlyingType,
+                        typeof(SessionStateTempDataProvider).FullName);
+                    throw new InvalidOperationException(message);
                 }
             }
         }
