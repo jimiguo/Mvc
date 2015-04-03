@@ -2,6 +2,9 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using ModelBindingWebSite.Models;
@@ -13,6 +16,34 @@ namespace ModelBindingWebSite.Controllers
     {
         [FromServices]
         public ITestService ControllerService { get; set; }
+
+        public async Task<string> CreatePhoneRecord(int id)
+        {
+            var phoneRecord = new PhoneRecord()
+            {
+               Number = id
+            };
+
+            await TryUpdateModelAsync(phoneRecord);
+            if (ModelState.IsValid)
+            {
+                return phoneRecord.Number.ToString();
+            }
+
+            return ModelState["User"].Errors.Single().ErrorMessage;
+        }
+
+        public string GetPhoneRecord(WrapperPhoneRecord wrapperRecord)
+        {
+            return ModelState["Record.User"].Errors.Single().ErrorMessage;
+        }
+
+        public IEnumerable<string> GetUser(WrapperUser wrapperUser)
+        {
+	     return GetModelStateErrorMessages(ModelState);
+	     
+            //return ModelState[""].Errors.Single().ErrorMessage;
+        }
 
         public bool SkipValidation(Resident resident)
         {
@@ -75,6 +106,34 @@ namespace ModelBindingWebSite.Controllers
         }
     }
 
+    public class WrapperPhoneRecord
+    {
+        public int Id { get; set; }
+         
+        public PhoneRecord Record { get; set; }
+    }
+
+    public class WrapperUser
+    {
+        [FromBody]
+        public int IntU { get; set; }
+        public TestUser User { get; set; }
+    }
+
+    public class TestUser
+    {
+        [Required]
+        public int IntProp { get; set; }
+
+        [Required]
+        public string StringProp { get; set; }
+
+        public int Id { get; set; }
+
+        [Required]
+        public int MyProperty { get; set; }
+    }
+    
     public class SelfishPerson
     {
         public string Name { get; set; }

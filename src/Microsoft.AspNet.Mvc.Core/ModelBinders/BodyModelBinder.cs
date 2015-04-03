@@ -62,6 +62,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
                 // Always tell the model binding system to skip other model binders i.e. return non-null.
                 return new ModelBindingResult(model: null, key: bindingContext.ModelName, isModelSet: false);
             }
+
         }
     }
 }

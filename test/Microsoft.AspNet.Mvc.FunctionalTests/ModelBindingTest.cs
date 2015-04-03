@@ -42,6 +42,66 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
         }
 
         [Fact]
+        public async Task Validate_BodyBoundModel_ModelIsNull()
+        {
+            // Arrange
+            var server = TestHelper.CreateServer(_app, SiteName, _configureServices);
+            var client = server.CreateClient();
+
+            // Make sure the body object gets created with an invalid zip.
+            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+
+            // Act
+            var response = await client.PostAsync(
+                "http://localhost/Validation/CreatePhoneRecord?Id=1234567890", content);
+
+            // Assert
+            var stringValue = await response.Content.ReadAsStringAsync();
+            Assert.Equal("The User field is required.", stringValue);
+        }
+
+
+        [Fact]
+        public async Task Validate_BodyBoundModel_PropertyIsNull()
+        {
+            // Arrange
+            var server = TestHelper.CreateServer(_app, SiteName, _configureServices);
+            var client = server.CreateClient();
+
+            // Make sure the body object gets created with an invalid zip.
+            var content = new StringContent("{123}", Encoding.UTF8, "application/json");
+
+            // Act
+            var response = await client.PostAsync(
+                "http://localhost/Validation/GetUser", content);
+
+            // Assert
+            var stringValue = await response.Content.ReadAsStringAsync();
+throw new Exception(stringValue);
+            //Assert.Equal("The RegisterationMonth field is required.", stringValue);
+        }
+
+        [Fact]
+        public async Task Validate_Model_ContainingABodyBoundPropertyIsNull()
+        {
+            // Arrange
+            var server = TestHelper.CreateServer(_app, SiteName, _configureServices);
+            var client = server.CreateClient();
+
+            // Make sure the body object gets created with an invalid zip.
+            var content = new StringContent(string.Empty, Encoding.UTF8, "application/json");
+
+            // Act
+            var response = await client.PostAsync(
+                "http://localhost/Validation/GetPhoneRecord?Record.Number=1234567890", content);
+
+            // Assert
+            var stringValue = await response.Content.ReadAsStringAsync();
+            Assert.Equal("The User field is required.", stringValue);
+        }
+
+
+        [Fact]
         public async Task TypeBasedExclusion_ForBodyAndNonBodyBoundModels()
         {
             // Arrange

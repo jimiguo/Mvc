@@ -898,7 +898,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Metadata
                 _attributes = attributes;
             }
 
-            protected override DefaultMetadataDetails CreateTypeDetails([NotNull]ModelMetadataIdentity key)
+            protected override DefaultMetadataDetails CreateTypeDetails(ModelMetadataIdentity key)
             {
                 var entry = base.CreateTypeDetails(key);
                 return new DefaultMetadataDetails(key, _attributes.Concat(entry.Attributes).ToArray());

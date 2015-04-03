@@ -102,7 +102,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
             {
             }
 
-            protected override Task<ModelBindingResult> BindModelCoreAsync([NotNull] ModelBindingContext bindingContext)
+            protected override Task<ModelBindingResult> BindModelCoreAsync(ModelBindingContext bindingContext)
             {
                 WasBindModelCoreCalled = true;
                 return Task.FromResult(new ModelBindingResult(null, bindingContext.ModelName, true));
