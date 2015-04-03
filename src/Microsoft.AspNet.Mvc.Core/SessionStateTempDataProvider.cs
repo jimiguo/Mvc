@@ -100,9 +100,13 @@ namespace Microsoft.AspNet.Mvc
                 {
                     itemType = itemType.GetElementType();
                 }
-                else if (TypeHelper.IsCollectionType(itemType))
+                else if (itemType.IsGenericType)
                 {
-                    actualTypes = itemType.GetGenericArguments();
+                    if (itemType.ExtractGenericInterface(typeof(IList<>)) != null ||
+                        itemType.ExtractGenericInterface(typeof(IDictionary<,>)) != null)
+                    {
+                        actualTypes = itemType.GetGenericArguments();
+                    }
                 }
 
                 actualTypes = actualTypes ?? new Type[] { itemType };

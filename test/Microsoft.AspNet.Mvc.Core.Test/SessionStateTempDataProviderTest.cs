@@ -130,6 +130,7 @@ namespace Microsoft.AspNet.Mvc
                     { "SimpleDict", new Dictionary<string, int>() },
                     { "Uri", new Uri("http://Foo") },
                     { "Guid", Guid.NewGuid() },
+                    { "SimpleList", new List<string> { "foo", "bar" } }
                 };
             }
         }
