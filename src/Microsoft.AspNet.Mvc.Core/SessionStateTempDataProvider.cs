@@ -17,8 +17,12 @@ namespace Microsoft.AspNet.Mvc
     /// </summary>
     public class SessionStateTempDataProvider : ITempDataProvider
     {
-        private string TempDataSessionStateKey = "__ControllerTempData";
-        private JsonSerializer jsonSerializer = new JsonSerializer();
+        private const string TempDataSessionStateKey = "__ControllerTempData";
+        private readonly JsonSerializer _jsonSerializer = JsonSerializer.Create(
+            new JsonSerializerSettings()
+            {
+                TypeNameHandling = TypeNameHandling.Auto
+            });
 
         /// <inheritdoc />
         public virtual IDictionary<string, object> LoadTempData([NotNull] HttpContext context)
@@ -38,7 +42,7 @@ namespace Microsoft.AspNet.Mvc
                 using (var memoryStream = new MemoryStream(value))
                 using (var writer = new BsonReader(memoryStream))
                 {
-                    tempDataDictionary = jsonSerializer.Deserialize<Dictionary<string, object>>(writer);
+                    tempDataDictionary = _jsonSerializer.Deserialize<Dictionary<string, object>>(writer);
                 }
 
                 // If we got it from Session, remove it so that no other request gets it
@@ -60,7 +64,7 @@ namespace Microsoft.AspNet.Mvc
             var hasValues = (values != null && values.Count > 0);
             if (hasValues)
             {
-                // We want to allow only primitive types to be serialized in session.
+                // We want to allow only simple types to be serialized in session.
                 EnsureObjectCanBeSerialized(values);
 
                 // Accessing Session property will throw if the session middleware is not enabled.
@@ -69,7 +73,7 @@ namespace Microsoft.AspNet.Mvc
                 using (var memoryStream = new MemoryStream())
                 using (var writer = new BsonWriter(memoryStream))
                 {
-                    jsonSerializer.Serialize(writer, values);
+                    _jsonSerializer.Serialize(writer, values);
                     session[TempDataSessionStateKey] = memoryStream.ToArray();
                 }
             }
@@ -85,7 +89,7 @@ namespace Microsoft.AspNet.Mvc
             return context.GetFeature<ISessionFeature>() != null;
         }
 
-        private void EnsureObjectCanBeSerialized(IDictionary<string, object> values)
+        internal void EnsureObjectCanBeSerialized(IDictionary<string, object> values)
         {
             foreach (var item in values.Values)
             {
@@ -108,7 +112,8 @@ namespace Microsoft.AspNet.Mvc
                     var underlyingType = Nullable.GetUnderlyingType(actualType) ?? actualType;
                     if (!TypeHelper.IsSimpleType(actualType))
                     {
-                        var message = Resources.FormatTempData_CannotSerializeToSession(underlyingType);
+                        var message = Resources.FormatTempData_CannotSerializeToSession(underlyingType,
+                            typeof(SessionStateTempDataProvider).FullName);
                         throw new InvalidOperationException(message);
                     }
                 }

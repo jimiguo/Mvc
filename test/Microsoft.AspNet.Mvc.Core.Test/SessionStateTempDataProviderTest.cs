@@ -78,7 +78,7 @@ namespace Microsoft.AspNet.Mvc
 
         [Theory]
         [MemberData(nameof(InvalidTypes))]
-        public void Save_InvalidType_Throws(string key, object value, Type type)
+        public void EnsureObjectCanBeSerialized_InvalidType_Throws(string key, object value, Type type)
         {
             // Arrange
             var testProvider = new SessionStateTempDataProvider();
@@ -86,12 +86,21 @@ namespace Microsoft.AspNet.Mvc
             // Act & Assert
             var exception = Assert.Throws<InvalidOperationException>(() =>
             {
-                testProvider.SaveTempData(
-                    GetHttpContext(session: null, sessionEnabled: false),
-                    new Dictionary<string, object> { { key, value } }
-                );
+                testProvider.EnsureObjectCanBeSerialized(new Dictionary<string, object> { { key, value } });
             });
-            Assert.Equal(string.Format("The type {0} cannot be serialized to Session.", type), exception.Message);
+            Assert.Equal($"The type {type} cannot be serialized to Session by '{typeof(SessionStateTempDataProvider).FullName}'.",
+                exception.Message);
+        }
+
+        [Theory]
+        [MemberData(nameof(ValidTypes))]
+        public void EnsureObjectCanBeSerialized_ValidType_DoesNotThrow(string key, object value)
+        {
+            // Arrange
+            var testProvider = new SessionStateTempDataProvider();
+
+            // Act & Assert (Does not throw)
+            testProvider.EnsureObjectCanBeSerialized(new Dictionary<string, object> { { key, value } });
         }
 
         public static TheoryData<string, object, Type> InvalidTypes
@@ -105,6 +114,22 @@ namespace Microsoft.AspNet.Mvc
                     { "TestItem", new TestItem(), typeof(TestItem) },
                     { "ListTestItem", new List<TestItem>(), typeof(TestItem) },
                     { "DictTestItem", new Dictionary<string, TestItem>(), typeof(TestItem) }
+                };
+            }
+        }
+
+        public static TheoryData<string, object> ValidTypes
+        {
+            get
+            {
+                return new TheoryData<string, object>
+                {
+                    { "int", 10 },
+                    { "IntArray", new int[]{ 10, 20 } },
+                    { "string", "FooValue" },
+                    { "SimpleDict", new Dictionary<string, int>() },
+                    { "Uri", new Uri("http://Foo") },
+                    { "Guid", Guid.NewGuid() },
                 };
             }
         }

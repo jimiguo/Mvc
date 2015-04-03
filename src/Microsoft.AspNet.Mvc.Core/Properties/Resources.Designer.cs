@@ -1739,7 +1739,7 @@ namespace Microsoft.AspNet.Mvc.Core
         }
 
         /// <summary>
-        /// The type {0} cannot be serialized to Session.
+        /// The type {0} cannot be serialized to Session by '{1}'.
         /// </summary>
         internal static string TempData_CannotSerializeToSession
         {
@@ -1747,11 +1747,11 @@ namespace Microsoft.AspNet.Mvc.Core
         }
 
         /// <summary>
-        /// The type {0} cannot be serialized to Session.
+        /// The type {0} cannot be serialized to Session by '{1}'.
         /// </summary>
-        internal static string FormatTempData_CannotSerializeToSession(object p0)
+        internal static string FormatTempData_CannotSerializeToSession(object p0, object p1)
         {
-            return string.Format(CultureInfo.CurrentCulture, GetString("TempData_CannotSerializeToSession"), p0);
+            return string.Format(CultureInfo.CurrentCulture, GetString("TempData_CannotSerializeToSession"), p0, p1);
         }
 
         private static string GetString(string name, params string[] formatterNames)
