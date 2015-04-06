@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using Xunit;
 
 namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
 {
     // Integration tests for the default configuration of ModelMetadata and Validation providers
-    public class DefaultModelValidatorProviderTest
+    public class DefaultModelClientValidatorProviderTest
     {
         [Fact]
         public void GetValidators_ForIValidatableObject()
@@ -32,7 +33,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
         }
 
         [Fact]
-        public void GetValidators_ModelValidatorAttributeOnClass()
+        public void GetValidators_ClientModelValidatorAttributeOnClass()
         {
             // Arrange
             var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
@@ -52,7 +53,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
         }
 
         [Fact]
-        public void GetValidators_ModelValidatorAttributeOnProperty()
+        public void GetValidators_ClientModelValidatorAttributeOnProperty()
         {
             // Arrange
             var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
@@ -74,7 +75,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
         }
 
         [Fact]
-        public void GetValidators_ModelValidatorAttributeOnPropertyAndClass()
+        public void GetValidators_ClientModelValidatorAttributeOnPropertyAndClass()
         {
             // Arrange
             var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
@@ -98,7 +99,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
 
         // RangeAttribute is an example of a ValidationAttribute with it's own adapter type.
         [Fact]
-        public void GetValidators_DataAnnotationsAttribute_SpecificAdapter()
+        public void GetValidators_ClientValidatorAttribute_SpecificAdapter()
         {
             // Arrange
             var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
@@ -117,18 +118,18 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
 
             Assert.IsType<RangeAttributeAdapter>(Assert.Single(validators));
         }
-        
+
         [Fact]
-        public void GetValidators_DataAnnotationsAttribute_DefaultAdapter()
+        public void GetValidators_ClientValidatorAttribute_DefaultAdapter()
         {
             // Arrange
             var metadataProvider = TestModelMetadataProvider.CreateDefaultProvider();
-            var validatorProvider = TestModelValidatorProvider.CreateDefaultProvider();
+            var validatorProvider = TestClientModelValidatorProvider.CreateDefaultProvider();
 
             var metadata = metadataProvider.GetMetadataForProperty(
                 typeof(CustomValidationAttributeOnProperty),
                 nameof(CustomValidationAttributeOnProperty.Property));
-            var context = new ModelValidatorProviderContext(metadata);
+            var context = new ClientValidatorProviderContext(metadata);
 
             // Act
             validatorProvider.GetValidators(context);
@@ -136,7 +137,7 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             // Assert
             var validators = context.Validators;
 
-             Assert.IsType<DataAnnotationsModelValidator>(Assert.Single(validators));
+             Assert.IsType<CustomValidationAttribute>(Assert.Single(validators));
         }
 
         [Fact]
@@ -196,7 +197,6 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
         {
         }
 
-        
         private class ModelValidatorAttributeOnProperty
         {
             [CustomModelValidator(Tag = "Property")]
@@ -233,8 +233,12 @@ namespace Microsoft.AspNet.Mvc.ModelBinding.Validation
             public int Property { get; set; }
         }
 
-        private class CustomValidationAttribute : ValidationAttribute
+        private class CustomValidationAttribute : Attribute, IClientModelValidator
         {
+            public IEnumerable<ModelClientValidationRule> GetClientValidationRules(ClientModelValidationContext context)
+            {
+                return Enumerable.Empty<ModelClientValidationRule>();
+            }
         }
 
         private class CustomValidationAttributeOnProperty
