@@ -9,6 +9,7 @@ using Microsoft.AspNet.JsonPatch.Helpers;
 using Microsoft.AspNet.JsonPatch.Operations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using System.Collections.Generic;
 
 namespace Microsoft.AspNet.JsonPatch.Adapters
 {
@@ -133,9 +134,9 @@ namespace Microsoft.AspNet.JsonPatch.Adapters
                 // what if it's an array but there's no position??
                 if (IsNonStringArray(patchProperty))
                 {
-                    // now, get the generic type of the enumerable
+                    // now, get the generic type of the enumerable from the runtime type of patchProperty value.
                     var genericTypeOfArray = PropertyHelpers.GetEnumerableType(
-                        patchProperty.Property.PropertyType);
+                        patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent).GetType());
 
                     var conversionResult = PropertyHelpers.ConvertToActualType(genericTypeOfArray, value);
 
@@ -237,8 +238,9 @@ namespace Microsoft.AspNet.JsonPatch.Adapters
             {
                 if (IsNonStringArray(patchProperty))
                 {
-                    // now, get the generic type of the enumerable
-                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(patchProperty.Property.PropertyType);
+                    // now, get the generic type of the enumerable from the runtime type of patchProperty value.
+                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(
+                        patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent).GetType());
 
                     // get value (it can be cast, we just checked that)
                     var array = (IList)patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent);
@@ -334,8 +336,9 @@ namespace Microsoft.AspNet.JsonPatch.Adapters
                 // what if it's an array but there's no position??
                 if (IsNonStringArray(patchProperty))
                 {
-                    // now, get the generic type of the enumerable
-                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(patchProperty.Property.PropertyType);
+                    // now, get the generic type of the enumerable from the runtime type of patchProperty value.
+                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(
+                        patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent).GetType());
 
                     // get value (it can be cast, we just checked that)
                     var array = (IList)patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent);
@@ -580,8 +583,9 @@ namespace Microsoft.AspNet.JsonPatch.Adapters
             {
                 if (IsNonStringArray(patchProperty))
                 {
-                    // now, get the generic type of the enumerable
-                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(patchProperty.Property.PropertyType);
+                    // now, get the generic type of the enumerable from the runtime type of patchProperty value.
+                    var genericTypeOfArray = PropertyHelpers.GetEnumerableType(
+                        patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent).GetType());
 
                     // get value (it can be cast, we just checked that)
                     var array = (IList)patchProperty.Property.ValueProvider.GetValue(patchProperty.Parent);
@@ -638,9 +642,22 @@ namespace Microsoft.AspNet.JsonPatch.Adapters
 
         private bool IsNonStringArray(JsonPatchProperty patchProperty)
         {
+            var jsonPropertyType = patchProperty.Property.PropertyType.GetTypeInfo();
+
+            if (jsonPropertyType.IsGenericType)
+            {
+                var genericArguments = jsonPropertyType.GetGenericArguments();
+                if (genericArguments.Length != 1)
+                {
+                    return false;
+                }
+                var listType = typeof(IList<>).MakeGenericType(genericArguments);
+                return listType.GetTypeInfo().IsAssignableFrom(jsonPropertyType);
+            }
+
             return !(patchProperty.Property.PropertyType == typeof(string))
                     && typeof(IList).GetTypeInfo().IsAssignableFrom(
-                        patchProperty.Property.PropertyType.GetTypeInfo());
+                        jsonPropertyType);
         }
 
         private void CheckIfPropertyCanBeSet(
