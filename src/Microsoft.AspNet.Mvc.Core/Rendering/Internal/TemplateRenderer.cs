@@ -12,6 +12,7 @@ using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.Rendering.Internal
 {
@@ -74,6 +75,7 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
         private IViewEngine _viewEngine;
         private string _templateName;
         private bool _readOnly;
+        private readonly ILogger _logger;
 
         public TemplateRenderer(
             [NotNull] IViewEngine viewEngine,
@@ -87,6 +89,8 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
             _viewData = viewData;
             _templateName = templateName;
             _readOnly = readOnly;
+            _logger = _viewContext.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger<TemplateRenderer>();
         }
 
         public string Render()
@@ -101,6 +105,10 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                 var viewEngineResult = _viewEngine.FindPartialView(_viewContext, fullViewName);
                 if (viewEngineResult.Success)
                 {
+                    _logger.LogVerbose(
+                        "The template for partial view '{PartialViewName}' was found successfully.", 
+                        viewName);
+
                     using (var writer = new StringWriter(CultureInfo.InvariantCulture))
                     {
                         // Forcing synchronous behavior so users don't have to await templates.
@@ -114,7 +122,7 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                         }
                     }
                 }
-
+                
                 Func<IHtmlHelper, string> defaultAction;
                 if (defaultActions.TryGetValue(viewName, out defaultAction))
                 {
@@ -122,8 +130,13 @@ namespace Microsoft.AspNet.Mvc.Rendering.Internal
                 }
             }
 
-            throw new InvalidOperationException(
-                Resources.FormatTemplateHelpers_NoTemplate(_viewData.ModelExplorer.ModelType.FullName));
+            var templateModelType = _viewData.ModelExplorer.ModelType.FullName;
+
+            _logger.LogError(
+                "The template for model type '{TemplateModelType}' was not found.", 
+                templateModelType);
+
+            throw new InvalidOperationException(Resources.FormatTemplateHelpers_NoTemplate(templateModelType));
         }
 
         private Dictionary<string, Func<IHtmlHelper, string>> GetDefaultActions()

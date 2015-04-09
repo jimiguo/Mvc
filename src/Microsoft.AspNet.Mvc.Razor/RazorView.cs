@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.PageExecutionInstrumentation;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.Razor
 {
@@ -21,6 +22,8 @@ namespace Microsoft.AspNet.Mvc.Razor
         private readonly IRazorPageActivator _pageActivator;
         private readonly IViewStartProvider _viewStartProvider;
         private IPageExecutionListenerFeature _pageExecutionFeature;
+        private readonly ILogger _logger;
+
 
         /// <summary>
         /// Initializes a new instance of <see cref="RazorView"/>
@@ -29,18 +32,21 @@ namespace Microsoft.AspNet.Mvc.Razor
         /// <param name="pageActivator">The <see cref="IRazorPageActivator"/> used to activate pages.</param>
         /// <param name="viewStartProvider">The <see cref="IViewStartProvider"/> used for discovery of _ViewStart
         /// <param name="razorPage">The <see cref="IRazorPage"/> instance to execute.</param>
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to log data.</param>
         /// <param name="isPartial">Determines if the view is to be executed as a partial.</param>
         /// pages</param>
         public RazorView(IRazorViewEngine viewEngine,
                          IRazorPageActivator pageActivator,
                          IViewStartProvider viewStartProvider,
                          IRazorPage razorPage,
+                         ILoggerFactory loggerFactory,
                          bool isPartial)
         {
             _viewEngine = viewEngine;
             _pageActivator = pageActivator;
             _viewStartProvider = viewStartProvider;
             RazorPage = razorPage;
+            _logger = loggerFactory.CreateLogger<RazorView>();
             IsPartial = isPartial;
         }
 
@@ -214,10 +220,20 @@ namespace Microsoft.AspNet.Mvc.Razor
             var layoutPageResult = _viewEngine.FindPage(context, layoutPath);
             if (layoutPageResult.Page == null)
             {
+                _logger.LogError(
+                    "The layout page '{LayoutPage}' was not found. Searched locations: {SearchedLayoutLocations}",
+                    layoutPath,
+                    layoutPageResult.SearchedLocations);
+
                 var locations = Environment.NewLine +
                                 string.Join(Environment.NewLine, layoutPageResult.SearchedLocations);
+                
                 throw new InvalidOperationException(Resources.FormatLayoutCannotBeLocated(layoutPath, locations));
             }
+
+            _logger.LogVerbose(
+                   "The layout page '{LayoutPage}' was found successfully.",
+                   layoutPath);
 
             var layoutPage = layoutPageResult.Page;
             return layoutPage;

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.ViewComponents
 {
@@ -16,15 +17,18 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
         private readonly IServiceProvider _serviceProvider;
         private readonly ITypeActivatorCache _typeActivatorCache;
         private readonly IViewComponentActivator _viewComponentActivator;
+        private readonly ILogger _logger;
 
         public DefaultViewComponentInvoker(
             [NotNull] IServiceProvider serviceProvider,
             [NotNull] ITypeActivatorCache typeActivatorCache,
-            [NotNull] IViewComponentActivator viewComponentActivator)
+            [NotNull] IViewComponentActivator viewComponentActivator,
+            [NotNull] ILoggerFactory loggerFactory)
         {
             _serviceProvider = serviceProvider;
             _typeActivatorCache = typeActivatorCache;
             _viewComponentActivator = viewComponentActivator;
+            _logger = loggerFactory.CreateLogger<DefaultViewComponentInvoker>();
         }
 
         public void Invoke([NotNull] ViewComponentContext context)
@@ -34,6 +38,12 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
                 context.Arguments);
             if (method == null)
             {
+                _logger.LogError(
+                    "Could not find a method with name '{ViewComponentMethodName}' on view " +
+                    "component '{ViewComponentName}'.",
+                    ViewComponentMethodSelector.SyncMethodName,
+                    context.ViewComponentDescriptor.FullName);
+
                 throw new InvalidOperationException(
                     Resources.FormatViewComponent_CannotFindMethod(ViewComponentMethodSelector.SyncMethodName));
             }
@@ -58,6 +68,12 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
                     context.Arguments);
                 if (syncMethod == null)
                 {
+                    _logger.LogError(
+                    "Could not find a method with name '{ViewComponentMethodName}' on view " +
+                    "component '{ViewComponentName}'.",
+                    ViewComponentMethodSelector.AsyncMethodName,
+                    context.ViewComponentDescriptor.FullName);
+
                     throw new InvalidOperationException(
                         Resources.FormatViewComponent_CannotFindMethod_WithFallback(
                         ViewComponentMethodSelector.SyncMethodName, ViewComponentMethodSelector.AsyncMethodName));

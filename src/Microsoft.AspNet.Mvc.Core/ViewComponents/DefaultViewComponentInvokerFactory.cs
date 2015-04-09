@@ -3,11 +3,13 @@
 
 using System;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.ViewComponents
 {
     public class DefaultViewComponentInvokerFactory : IViewComponentInvokerFactory
     {
+        private readonly ILoggerFactory _loggerFactory;
         private readonly IServiceProvider _serviceProvider;
         private readonly ITypeActivatorCache _typeActivatorCache;
         private readonly IViewComponentActivator _viewComponentActivator;
@@ -15,11 +17,13 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
         public DefaultViewComponentInvokerFactory(
             IServiceProvider serviceProvider,
             ITypeActivatorCache typeActivatorCache,
-            IViewComponentActivator viewComponentActivator)
+            IViewComponentActivator viewComponentActivator,
+            [NotNull] ILoggerFactory loggerFactory)
         {
             _serviceProvider = serviceProvider;
             _typeActivatorCache = typeActivatorCache;
             _viewComponentActivator = viewComponentActivator;
+            _loggerFactory = loggerFactory;
         }
 
         /// <inheritdoc />
@@ -33,7 +37,8 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
             return new DefaultViewComponentInvoker(
                 _serviceProvider,
                 _typeActivatorCache,
-                _viewComponentActivator);
+                _viewComponentActivator,
+                _loggerFactory);
         }
     }
 }

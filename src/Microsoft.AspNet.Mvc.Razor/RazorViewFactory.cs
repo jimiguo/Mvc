@@ -3,6 +3,7 @@
 
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.Razor
 {
@@ -12,6 +13,7 @@ namespace Microsoft.AspNet.Mvc.Razor
     /// </summary>
     public class RazorViewFactory : IRazorViewFactory
     {
+        private readonly ILoggerFactory _loggerFactory;
         private readonly IRazorPageActivator _pageActivator;
         private readonly IViewStartProvider _viewStartProvider;
 
@@ -21,11 +23,14 @@ namespace Microsoft.AspNet.Mvc.Razor
         /// <param name="pageActivator">The <see cref="IRazorPageActivator"/> used to activate pages.</param>
         /// <param name="viewStartProvider">The <see cref="IViewStartProvider"/> used for discovery of _ViewStart
         /// pages</param>
+        /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> to log data.</param>
         public RazorViewFactory(IRazorPageActivator pageActivator,
-                                IViewStartProvider viewStartProvider)
+                                IViewStartProvider viewStartProvider,
+                                ILoggerFactory loggerFactory)
         {
             _pageActivator = pageActivator;
             _viewStartProvider = viewStartProvider;
+            _loggerFactory = loggerFactory;
         }
 
         /// <inheritdoc />
@@ -33,7 +38,14 @@ namespace Microsoft.AspNet.Mvc.Razor
                              [NotNull] IRazorPage page,
                              bool isPartial)
         {
-            var razorView = new RazorView(viewEngine, _pageActivator, _viewStartProvider, page, isPartial);
+            var razorView = new RazorView(
+                viewEngine, 
+                _pageActivator, 
+                _viewStartProvider, 
+                page, 
+                _loggerFactory, 
+                isPartial);
+
             return razorView;
         }
     }

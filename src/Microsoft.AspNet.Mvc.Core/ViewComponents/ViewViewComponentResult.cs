@@ -8,6 +8,7 @@ using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.Mvc.ViewComponents;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc
 {
@@ -107,7 +108,26 @@ namespace Microsoft.AspNet.Mvc
 
         private static IView FindView(ActionContext context, IViewEngine viewEngine, string viewName)
         {
-            return viewEngine.FindPartialView(context, viewName).EnsureSuccessful().View;
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger<ViewViewComponentResult>();
+
+            var viewEngineResult = viewEngine.FindPartialView(context, viewName);
+            if (!viewEngineResult.Success)
+            {
+                logger.LogError(
+                    "The view component view '{ViewComponentViewName}' was not found. " +
+                    "Searched locations: {SearchedViewLocations}",
+                    viewName,
+                    viewEngineResult.SearchedLocations);
+            }
+            else
+            {
+                logger.LogVerbose(
+                    "The view component view '{ViewComponentViewName}' was found successfully.",
+                    viewName);
+            }
+
+            return viewEngineResult.EnsureSuccessful().View;
         }
 
         private static IViewEngine ResolveViewEngine(ViewComponentContext context)

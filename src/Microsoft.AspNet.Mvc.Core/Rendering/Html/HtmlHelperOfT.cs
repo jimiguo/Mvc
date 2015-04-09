@@ -8,6 +8,7 @@ using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Rendering.Expressions;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 using Microsoft.Framework.WebEncoders;
 
 namespace Microsoft.AspNet.Mvc.Rendering
@@ -23,8 +24,16 @@ namespace Microsoft.AspNet.Mvc.Rendering
             [NotNull] IModelMetadataProvider metadataProvider,
             [NotNull] IHtmlEncoder htmlEncoder,
             [NotNull] IUrlEncoder urlEncoder,
-            [NotNull] IJavaScriptStringEncoder javaScriptStringEncoder)
-            : base(htmlGenerator, viewEngine, metadataProvider, htmlEncoder, urlEncoder, javaScriptStringEncoder)
+            [NotNull] IJavaScriptStringEncoder javaScriptStringEncoder,
+            [NotNull] ILoggerFactory loggerFactory)
+            : base(
+                  htmlGenerator, 
+                  viewEngine, 
+                  metadataProvider, 
+                  htmlEncoder, 
+                  urlEncoder, 
+                  javaScriptStringEncoder, 
+                  loggerFactory)
         {
         }
 
