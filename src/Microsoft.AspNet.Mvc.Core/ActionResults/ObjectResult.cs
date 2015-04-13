@@ -11,6 +11,7 @@ using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.WebUtilities;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging;
 using Microsoft.Framework.OptionsModel;
 using Microsoft.Net.Http.Headers;
 
@@ -18,6 +19,8 @@ namespace Microsoft.AspNet.Mvc
 {
     public class ObjectResult : ActionResult
     {
+        private ILogger logger;
+
         public ObjectResult(object value)
         {
             Value = value;
@@ -40,6 +43,9 @@ namespace Microsoft.AspNet.Mvc
 
         public override async Task ExecuteResultAsync(ActionContext context)
         {
+            logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
+                .CreateLogger<ObjectResult>();
+                            
             // See if the list of content types added to this object result is valid.
             ThrowIfUnsupportedContentType();
             var formatters = GetDefaultFormatters(context);
@@ -55,9 +61,15 @@ namespace Microsoft.AspNet.Mvc
             if (selectedFormatter == null)
             {
                 // No formatter supports this.
+                logger.LogVerbose("No output formatter was found to write the response.");
+
                 context.HttpContext.Response.StatusCode = StatusCodes.Status406NotAcceptable;
                 return;
             }
+
+            logger.LogVerbose(
+                "Selected formatter '{OutputFormatter}' to write the response.", 
+                selectedFormatter.GetType().FullName);
 
             if (StatusCode.HasValue)
             {
@@ -123,6 +135,8 @@ namespace Microsoft.AspNet.Mvc
                 // fallback on type based match.
                 if (selectedFormatter == null)
                 {
+                    logger.LogVerbose("Could not find an output formatter based on content-negotiation.");
+
                     // Set this flag to indicate that content-negotiation has failed to let formatters decide
                     // if they want to write the response or not.
                     formatterContext.FailedContentNegotiation = true;
