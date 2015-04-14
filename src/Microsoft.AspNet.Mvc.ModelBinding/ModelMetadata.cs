@@ -167,6 +167,16 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         public abstract bool HideSurroundingHtml { get; }
 
         /// <summary>
+        /// Gets a value indicating whether or not the model value is required by model binding. This is only
+        /// applicable when the current instance represents a property.
+        /// </summary>
+        /// <remarks>
+        /// If <c>true</c> then the model value is considered required by model-binding and must have a value
+        /// supplied in the request to be considered valid.
+        /// </remarks>
+        public abstract bool IsBindingRequired { get; }
+
+        /// <summary>
         /// Gets a value indicating whether <see cref="ModelType"/> or <c>Nullable.GetUnderlyingType(ModelType)</c> is
         /// for an <see cref="Enum"/>.
         /// </summary>
@@ -197,6 +207,10 @@ namespace Microsoft.AspNet.Mvc.ModelBinding
         /// Gets a value indicating whether or not the model value is required. This is only applicable when
         /// the current instance represents a property.
         /// </summary>
+        /// <remarks>
+        /// If <c>true</c> then the model value is considered required by validators and must have a non-<c>null</c>
+        /// value to be considered valid.
+        /// </remarks>
         public abstract bool IsRequired { get; }
 
         /// <summary>
