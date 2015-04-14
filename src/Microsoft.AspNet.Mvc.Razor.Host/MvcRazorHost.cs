@@ -62,7 +62,7 @@ namespace Microsoft.AspNet.Mvc.Razor
                 writeLiteralMethodName: "WriteLiteral",
                 writeToMethodName: "WriteTo",
                 writeLiteralToMethodName: "WriteLiteralTo",
-                templateTypeName: "Microsoft.AspNet.Mvc.Razor.HelperResult",
+                templateTypeName: "Microsoft.AspNet.Mvc.HelperResult",
                 defineSectionMethodName: "DefineSection",
                 generatedTagHelperContext: new GeneratedTagHelperContext
                 {

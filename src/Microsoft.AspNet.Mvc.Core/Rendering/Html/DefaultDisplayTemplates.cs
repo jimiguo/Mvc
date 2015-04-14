@@ -14,7 +14,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
 {
     public static class DefaultDisplayTemplates
     {
-        public static string BooleanTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString BooleanTemplate(IHtmlHelper htmlHelper)
         {
             bool? value = null;
             if (htmlHelper.ViewData.Model != null)
@@ -22,9 +22,9 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 value = Convert.ToBoolean(htmlHelper.ViewData.Model, CultureInfo.InvariantCulture);
             }
 
-            return htmlHelper.ViewData.ModelMetadata.IsNullableValueType ?
+            return new HtmlString(htmlHelper.ViewData.ModelMetadata.IsNullableValueType ?
                 BooleanTemplateDropDownList(htmlHelper, value) :
-                BooleanTemplateCheckbox(value ?? false, htmlHelper);
+                BooleanTemplateCheckbox(value ?? false, htmlHelper));
         }
 
         private static string BooleanTemplateCheckbox(bool value, IHtmlHelper htmlHelper)
@@ -88,12 +88,12 @@ namespace Microsoft.AspNet.Mvc.Rendering
             };
         }
 
-        public static string CollectionTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString CollectionTemplate(IHtmlHelper htmlHelper)
         {
             var model = htmlHelper.ViewData.Model;
             if (model == null)
             {
-                return string.Empty;
+                return HtmlString.Empty;
             }
 
             var collection = model as IEnumerable;
@@ -120,7 +120,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 htmlHelper.ViewData.TemplateInfo.HtmlFieldPrefix = string.Empty;
 
                 var fieldNameBase = oldPrefix;
-                var result = new StringBuilder();
+                var result = new StringCollectionTextWriter(Encoding.UTF8);
 
                 var serviceProvider = htmlHelper.ViewContext.HttpContext.RequestServices;
                 var metadataProvider = serviceProvider.GetRequiredService<IModelMetadataProvider>();
@@ -148,11 +148,10 @@ namespace Microsoft.AspNet.Mvc.Rendering
                         readOnly: true,
                         additionalViewData: null);
 
-                    var output = templateBuilder.Build();
-                    result.Append(output);
+                    templateBuilder.Build().WriteTo(result);
                 }
 
-                return result.ToString();
+                return new HtmlString(result);
             }
             finally
             {
@@ -160,7 +159,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
             }
         }
 
-        public static string DecimalTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString DecimalTemplate(IHtmlHelper htmlHelper)
         {
             if (htmlHelper.ViewData.TemplateInfo.FormattedModelValue == htmlHelper.ViewData.Model)
             {
@@ -171,7 +170,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return StringTemplate(htmlHelper);
         }
 
-        public static string EmailAddressTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString EmailAddressTemplate(IHtmlHelper htmlHelper)
         {
             var uriString = "mailto:" + ((htmlHelper.ViewData.Model == null) ?
                 string.Empty :
@@ -183,31 +182,31 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return HyperlinkTemplate(uriString, linkedText, htmlHelper);
         }
 
-        public static string HiddenInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString HiddenInputTemplate(IHtmlHelper htmlHelper)
         {
             if (htmlHelper.ViewData.ModelMetadata.HideSurroundingHtml)
             {
-                return string.Empty;
+                return HtmlString.Empty;
             }
 
             return StringTemplate(htmlHelper);
         }
 
-        public static string HtmlTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString HtmlTemplate(IHtmlHelper htmlHelper)
         {
-            return htmlHelper.ViewData.TemplateInfo.FormattedModelValue.ToString();
+            return new HtmlString(htmlHelper.ViewData.TemplateInfo.FormattedModelValue.ToString());
         }
 
-        public static string ObjectTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString ObjectTemplate(IHtmlHelper htmlHelper)
         {
             var viewData = htmlHelper.ViewData;
             var templateInfo = viewData.TemplateInfo;
             var modelExplorer = viewData.ModelExplorer;
-            var builder = new StringBuilder();
+            var builder = new StringCollectionTextWriter(Encoding.UTF8);
 
             if (modelExplorer.Model == null)
             {
-                return modelExplorer.Metadata.NullDisplayText;
+                return new HtmlString(modelExplorer.Metadata.NullDisplayText);
             }
 
             if (templateInfo.TemplateDepth > 1)
@@ -218,7 +217,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     text = htmlHelper.Encode(text);
                 }
 
-                return text;
+                return new HtmlString(text);
             }
 
             var serviceProvider = htmlHelper.ViewContext.HttpContext.RequestServices;
@@ -241,14 +240,14 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     {
                         divTag.SetInnerText(label);
                         divTag.AddCssClass("display-label");
-                        builder.AppendLine(divTag.ToString(TagRenderMode.Normal));
+                        builder.WriteLine(divTag.ToString(TagRenderMode.Normal));
 
                         // Reset divTag for reuse.
                         divTag.Attributes.Clear();
                     }
 
                     divTag.AddCssClass("display-field");
-                    builder.Append(divTag.ToString(TagRenderMode.StartTag));
+                    builder.Write(divTag.ToString(TagRenderMode.StartTag));
                 }
 
                 var templateBuilder = new TemplateBuilder(
@@ -261,15 +260,15 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     readOnly: true,
                     additionalViewData: null);
 
-                builder.Append(templateBuilder.Build());
+                templateBuilder.Build().WriteTo(builder);
 
                 if (!propertyMetadata.HideSurroundingHtml)
                 {
-                    builder.AppendLine(divTag.ToString(TagRenderMode.EndTag));
+                    builder.WriteLine(divTag.ToString(TagRenderMode.EndTag));
                 }
             }
 
-            return builder.ToString();
+            return new HtmlString(builder);
         }
 
         private static bool ShouldShow(ModelExplorer modelExplorer, TemplateInfo templateInfo)
@@ -280,12 +279,12 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 !templateInfo.Visited(modelExplorer);
         }
 
-        public static string StringTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString StringTemplate(IHtmlHelper htmlHelper)
         {
-            return htmlHelper.Encode(htmlHelper.ViewData.TemplateInfo.FormattedModelValue);
+            return new HtmlString(htmlHelper.Encode(htmlHelper.ViewData.TemplateInfo.FormattedModelValue));
         }
 
-        public static string UrlTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString UrlTemplate(IHtmlHelper htmlHelper)
         {
             var uriString = (htmlHelper.ViewData.Model == null) ? string.Empty : htmlHelper.ViewData.Model.ToString();
             var linkedText = (htmlHelper.ViewData.TemplateInfo.FormattedModelValue == null) ?
@@ -296,13 +295,13 @@ namespace Microsoft.AspNet.Mvc.Rendering
         }
 
         // Neither uriString nor linkedText need be encoded prior to calling this method.
-        private static string HyperlinkTemplate(string uriString, string linkedText, IHtmlHelper htmlHelper)
+        private static HtmlString HyperlinkTemplate(string uriString, string linkedText, IHtmlHelper htmlHelper)
         {
             var hyperlinkTag = new TagBuilder("a", htmlHelper.HtmlEncoder);
             hyperlinkTag.MergeAttribute("href", uriString);
             hyperlinkTag.SetInnerText(linkedText);
 
-            return hyperlinkTag.ToString(TagRenderMode.Normal);
+            return new HtmlString(hyperlinkTag.ToString(TagRenderMode.Normal));
         }
     }
 }

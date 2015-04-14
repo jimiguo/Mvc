@@ -105,7 +105,7 @@ namespace Microsoft.AspNet.Mvc.Core
             var result = DefaultEditorTemplates.ObjectTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace Microsoft.AspNet.Mvc.Core
             var result = DefaultEditorTemplates.ObjectTemplate(html);
 
             // Assert
-            Assert.Equal(html.ViewData.ModelMetadata.NullDisplayText, result);
+            Assert.Equal(html.ViewData.ModelMetadata.NullDisplayText, result.ToString());
         }
 
         [Theory]
@@ -161,7 +161,7 @@ namespace Microsoft.AspNet.Mvc.Core
             var result = DefaultEditorTemplates.ObjectTemplate(html);
 
             // Assert
-            Assert.Equal(expectedResult, result);
+            Assert.Equal(expectedResult, result.ToString());
         }
 
         [Fact]
@@ -190,7 +190,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.ObjectTemplate(htmlHelper);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -220,7 +220,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.ObjectTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -264,7 +264,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.ObjectTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -286,7 +286,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.HiddenInputTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -313,7 +313,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.HiddenInputTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Fact]
@@ -337,7 +337,7 @@ Environment.NewLine;
             var result = DefaultEditorTemplates.MultilineTemplate(html);
 
             // Assert
-            Assert.Equal(expected, result);
+            Assert.Equal(expected, result.ToString());
         }
 
         [Theory]

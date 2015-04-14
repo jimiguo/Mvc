@@ -17,7 +17,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
     {
         private const string HtmlAttributeKey = "htmlAttributes";
 
-        public static string BooleanTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString BooleanTemplate(IHtmlHelper htmlHelper)
         {
             bool? value = null;
             if (htmlHelper.ViewData.Model != null)
@@ -25,9 +25,9 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 value = Convert.ToBoolean(htmlHelper.ViewData.Model, CultureInfo.InvariantCulture);
             }
 
-            return htmlHelper.ViewData.ModelMetadata.IsNullableValueType ?
+            return new HtmlString(htmlHelper.ViewData.ModelMetadata.IsNullableValueType ?
                 BooleanTemplateDropDownList(htmlHelper, value) :
-                BooleanTemplateCheckbox(htmlHelper, value ?? false);
+                BooleanTemplateCheckbox(htmlHelper, value ?? false));
         }
 
         private static string BooleanTemplateCheckbox(IHtmlHelper htmlHelper, bool value)
@@ -49,13 +49,13 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     .ToString();
         }
 
-        public static string CollectionTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString CollectionTemplate(IHtmlHelper htmlHelper)
         {
             var viewData = htmlHelper.ViewData;
             var model = viewData.Model;
             if (model == null)
             {
-                return string.Empty;
+                return HtmlString.Empty;
             }
 
             var collection = model as IEnumerable;
@@ -81,7 +81,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 viewData.TemplateInfo.HtmlFieldPrefix = string.Empty;
 
                 var fieldNameBase = oldPrefix;
-                var result = new StringBuilder();
+                var result = new StringCollectionTextWriter(Encoding.UTF8);
 
                 var serviceProvider = htmlHelper.ViewContext.HttpContext.RequestServices;
                 var metadataProvider = serviceProvider.GetRequiredService<IModelMetadataProvider>();
@@ -109,11 +109,10 @@ namespace Microsoft.AspNet.Mvc.Rendering
                         readOnly: false,
                         additionalViewData: null);
 
-                    var output = templateBuilder.Build();
-                    result.Append(output);
+                    templateBuilder.Build().WriteTo(result);
                 }
 
-                return result.ToString();
+                return new HtmlString(result);
             }
             finally
             {
@@ -121,7 +120,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
             }
         }
 
-        public static string DecimalTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString DecimalTemplate(IHtmlHelper htmlHelper)
         {
             if (htmlHelper.ViewData.TemplateInfo.FormattedModelValue == htmlHelper.ViewData.Model)
             {
@@ -132,19 +131,19 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return StringTemplate(htmlHelper);
         }
 
-        public static string HiddenInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString HiddenInputTemplate(IHtmlHelper htmlHelper)
         {
             var viewData = htmlHelper.ViewData;
             var model = viewData.Model;
 
-            string result;
+            var result = new StringCollectionTextWriter(Encoding.UTF8);
             if (viewData.ModelMetadata.HideSurroundingHtml)
             {
-                result = string.Empty;
+                result.Write(string.Empty);
             }
             else
             {
-                result = DefaultDisplayTemplates.StringTemplate(htmlHelper);
+                result.Write(DefaultDisplayTemplates.StringTemplate(htmlHelper));
             }
 
             // Special-case opaque values and arbitrary binary data.
@@ -156,9 +155,9 @@ namespace Microsoft.AspNet.Mvc.Rendering
 
             var htmlAttributesObject = viewData[HtmlAttributeKey];
             var hiddenResult = htmlHelper.Hidden(expression: null, value: model, htmlAttributes: htmlAttributesObject);
-            result += hiddenResult.ToString();
+            hiddenResult.WriteTo(result);
 
-            return result;
+            return new HtmlString(result);
         }
 
         private static IDictionary<string, object> CreateHtmlAttributes(
@@ -212,29 +211,28 @@ namespace Microsoft.AspNet.Mvc.Rendering
             return htmlAttributes;
         }
 
-        public static string MultilineTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString MultilineTemplate(IHtmlHelper htmlHelper)
         {
-            var htmlString = htmlHelper.TextArea(
+            return htmlHelper.TextArea(
                 expression: string.Empty,
                 value: htmlHelper.ViewContext.ViewData.TemplateInfo.FormattedModelValue.ToString(),
                 rows: 0,
                 columns: 0,
                 htmlAttributes: CreateHtmlAttributes(htmlHelper, "text-box multi-line"));
-            return htmlString.ToString();
         }
 
-        public static string ObjectTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString ObjectTemplate(IHtmlHelper htmlHelper)
         {
             var viewData = htmlHelper.ViewData;
             var templateInfo = viewData.TemplateInfo;
             var modelExplorer = viewData.ModelExplorer;
-            var builder = new StringBuilder();
+            var builder = new StringCollectionTextWriter(Encoding.UTF8);
 
             if (templateInfo.TemplateDepth > 1)
             {
                 if (modelExplorer.Model == null)
                 {
-                    return modelExplorer.Metadata.NullDisplayText;
+                    return new HtmlString(modelExplorer.Metadata.NullDisplayText);
                 }
 
                 var text = modelExplorer.GetSimpleDisplayText();
@@ -243,7 +241,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     text = htmlHelper.Encode(text);
                 }
 
-                return text;
+                return new HtmlString(text);
             }
 
             var serviceProvider = htmlHelper.ViewContext.HttpContext.RequestServices;
@@ -270,14 +268,14 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     {
                         divTag.AddCssClass("editor-label");
                         divTag.InnerHtml = label; // already escaped
-                        builder.AppendLine(divTag.ToString(TagRenderMode.Normal));
+                        builder.WriteLine(divTag.ToString(TagRenderMode.Normal));
 
                         // Reset divTag for reuse.
                         divTag.Attributes.Clear();
                     }
 
                     divTag.AddCssClass("editor-field");
-                    builder.Append(divTag.ToString(TagRenderMode.StartTag));
+                    builder.Write(divTag.ToString(TagRenderMode.StartTag));
                 }
 
                 var templateBuilder = new TemplateBuilder(
@@ -290,31 +288,30 @@ namespace Microsoft.AspNet.Mvc.Rendering
                     readOnly: false,
                     additionalViewData: null);
 
-                builder.Append(templateBuilder.Build());
+                templateBuilder.Build().WriteTo(builder);
 
                 if (!propertyMetadata.HideSurroundingHtml)
                 {
-                    builder.Append(" ");
-                    builder.Append(htmlHelper.ValidationMessage(
+                    builder.Write(" ");
+                    builder.Write(htmlHelper.ValidationMessage(
                         propertyMetadata.PropertyName,
                         message: null,
                         htmlAttributes: null,
                         tag: null));
 
-                    builder.AppendLine(divTag.ToString(TagRenderMode.EndTag));
+                    builder.WriteLine(divTag.ToString(TagRenderMode.EndTag));
                 }
             }
 
-            return builder.ToString();
+            return new HtmlString(builder);
         }
 
-        public static string PasswordTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString PasswordTemplate(IHtmlHelper htmlHelper)
         {
             return htmlHelper.Password(
                 expression: null,
                 value: htmlHelper.ViewData.TemplateInfo.FormattedModelValue,
-                htmlAttributes: CreateHtmlAttributes(htmlHelper, "text-box single-line password"))
-                    .ToString();
+                htmlAttributes: CreateHtmlAttributes(htmlHelper, "text-box single-line password"));
         }
 
         private static bool ShouldShow(ModelExplorer modelExplorer, TemplateInfo templateInfo)
@@ -325,51 +322,51 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 !templateInfo.Visited(modelExplorer);
         }
 
-        public static string StringTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString StringTemplate(IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper);
         }
 
-        public static string PhoneNumberInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString PhoneNumberInputTemplate(IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper, inputType: "tel");
         }
 
-        public static string UrlInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString UrlInputTemplate(IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper, inputType: "url");
         }
 
-        public static string EmailAddressInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString EmailAddressInputTemplate(IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper, inputType: "email");
         }
 
-        public static string DateTimeInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString DateTimeInputTemplate(IHtmlHelper htmlHelper)
         {
             ApplyRfc3339DateFormattingIfNeeded(htmlHelper, "{0:yyyy-MM-ddTHH:mm:ss.fffK}");
             return GenerateTextBox(htmlHelper, inputType: "datetime");
         }
 
-        public static string DateTimeLocalInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString DateTimeLocalInputTemplate(IHtmlHelper htmlHelper)
         {
             ApplyRfc3339DateFormattingIfNeeded(htmlHelper, "{0:yyyy-MM-ddTHH:mm:ss.fff}");
             return GenerateTextBox(htmlHelper, inputType: "datetime-local");
         }
 
-        public static string DateInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString DateInputTemplate(IHtmlHelper htmlHelper)
         {
             ApplyRfc3339DateFormattingIfNeeded(htmlHelper, "{0:yyyy-MM-dd}");
             return GenerateTextBox(htmlHelper, inputType: "date");
         }
 
-        public static string TimeInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString TimeInputTemplate(IHtmlHelper htmlHelper)
         {
             ApplyRfc3339DateFormattingIfNeeded(htmlHelper, "{0:HH:mm:ss.fff}");
             return GenerateTextBox(htmlHelper, inputType: "time");
         }
 
-        public static string NumberInputTemplate(IHtmlHelper htmlHelper)
+        public static HtmlString NumberInputTemplate(IHtmlHelper htmlHelper)
         {
             return GenerateTextBox(htmlHelper, inputType: "number");
         }
@@ -395,12 +392,12 @@ namespace Microsoft.AspNet.Mvc.Rendering
             }
         }
 
-        private static string GenerateTextBox(IHtmlHelper htmlHelper, string inputType = null)
+        private static HtmlString GenerateTextBox(IHtmlHelper htmlHelper, string inputType = null)
         {
             return GenerateTextBox(htmlHelper, inputType, htmlHelper.ViewData.TemplateInfo.FormattedModelValue);
         }
 
-        private static string GenerateTextBox(IHtmlHelper htmlHelper, string inputType, object value)
+        private static HtmlString GenerateTextBox(IHtmlHelper htmlHelper, string inputType, object value)
         {
             var htmlAttributes =
                 CreateHtmlAttributes(htmlHelper, className: "text-box single-line", inputType: inputType);
@@ -409,8 +406,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 current: null,
                 value: value,
                 format: null,
-                htmlAttributes: htmlAttributes)
-                    .ToString();
+                htmlAttributes: htmlAttributes);
         }
     }
 }

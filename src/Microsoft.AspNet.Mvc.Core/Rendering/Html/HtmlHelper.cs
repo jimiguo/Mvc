@@ -461,9 +461,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                                                       readOnly: true,
                                                       additionalViewData: additionalViewData);
 
-            var templateResult = templateBuilder.Build();
-
-            return new HtmlString(templateResult);
+            return templateBuilder.Build();
         }
 
         protected virtual async Task RenderPartialCoreAsync([NotNull] string partialViewName,
@@ -719,9 +717,7 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 readOnly: false,
                 additionalViewData: additionalViewData);
 
-            var templateResult = templateBuilder.Build();
-
-            return new HtmlString(templateResult);
+            return templateBuilder.Build();
         }
 
         /// <summary>
