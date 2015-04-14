@@ -120,14 +120,14 @@ namespace Microsoft.AspNet.Mvc
                     viewName,
                     viewEngineResult.SearchedLocations);
             }
-            else
-            {
-                logger.LogVerbose(
+            
+            var view = viewEngineResult.EnsureSuccessful().View;
+
+            logger.LogVerbose(
                     "The view component view '{ViewComponentViewName}' was found successfully.",
                     viewName);
-            }
 
-            return viewEngineResult.EnsureSuccessful().View;
+            return view;
         }
 
         private static IViewEngine ResolveViewEngine(ViewComponentContext context)
