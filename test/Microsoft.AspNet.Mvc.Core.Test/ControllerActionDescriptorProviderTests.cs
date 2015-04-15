@@ -11,6 +11,7 @@ using Microsoft.AspNet.Mvc.Description;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Routing;
 using Microsoft.Framework.Internal;
+using Microsoft.Framework.Logging.Testing;
 using Moq;
 using Xunit;
 

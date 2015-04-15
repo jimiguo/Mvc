@@ -9,6 +9,7 @@ using Microsoft.AspNet.Authorization;
 using Microsoft.AspNet.Mvc.ApplicationModels;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Logging.Testing;
 using Xunit;
 
 namespace Microsoft.AspNet.Mvc.Logging
@@ -20,7 +21,7 @@ namespace Microsoft.AspNet.Mvc.Logging
         {
             // Arrange
             var sink = new TestSink();
-            var loggerFactory = new TestLoggerFactory(sink);
+            var loggerFactory = new TestLoggerFactory(sink, enabled: true);
 
             // Act
             var provider = GetProvider(
@@ -61,7 +62,7 @@ namespace Microsoft.AspNet.Mvc.Logging
         {
             // Arrange
             var sink = new TestSink();
-            var loggerFactory = new TestLoggerFactory(sink);
+            var loggerFactory = new TestLoggerFactory(sink, enabled: true);
 
             // Act
             CreateActionDescriptors(loggerFactory, 

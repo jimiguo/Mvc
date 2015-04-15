@@ -13,11 +13,11 @@ using Microsoft.AspNet.Http.Core.Collections;
 using Microsoft.AspNet.Mvc.ActionConstraints;
 using Microsoft.AspNet.Mvc.ApplicationModels;
 using Microsoft.AspNet.Mvc.Core;
-using Microsoft.AspNet.Mvc.Logging;
 using Microsoft.AspNet.Mvc.Routing;
 using Microsoft.AspNet.Routing;
 using Microsoft.Framework.Internal;
 using Microsoft.Framework.Logging;
+using Microsoft.Framework.Logging.Testing;
 using Moq;
 using Xunit;
 
@@ -30,7 +30,7 @@ namespace Microsoft.AspNet.Mvc
         {
             // Arrange
             var sink = new TestSink();
-            var loggerFactory = new TestLoggerFactory(sink);
+            var loggerFactory = new TestLoggerFactory(sink, enabled: true);
 
             var actions = new ActionDescriptor[]
             {

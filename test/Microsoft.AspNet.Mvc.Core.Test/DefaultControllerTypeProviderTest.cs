@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Microsoft.AspNet.Mvc.DefaultControllerTypeProviderControllers;
+using Microsoft.Framework.Logging.Testing;
 using Xunit;
 
 namespace Microsoft.AspNet.Mvc

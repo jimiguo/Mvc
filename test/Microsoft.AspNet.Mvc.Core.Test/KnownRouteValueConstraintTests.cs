@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Mvc.Core;
+using Microsoft.Framework.Logging.Testing;
 using Moq;
 using Xunit;
 
