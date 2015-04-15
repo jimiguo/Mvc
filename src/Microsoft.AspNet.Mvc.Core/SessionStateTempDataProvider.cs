@@ -2,14 +2,17 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.Framework.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Bson;
+using Newtonsoft.Json.Linq;
 
 namespace Microsoft.AspNet.Mvc
 {
@@ -22,8 +25,27 @@ namespace Microsoft.AspNet.Mvc
         private readonly JsonSerializer _jsonSerializer = JsonSerializer.Create(
             new JsonSerializerSettings()
             {
-                TypeNameHandling = TypeNameHandling.Auto
+                TypeNameHandling = TypeNameHandling.None
             });
+
+        private static readonly MethodInfo _convertArrayMethodInfo = typeof(SessionStateTempDataProvider).GetMethod(
+            nameof(ConvertArray), BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(JArray) }, null);
+
+        private readonly ConcurrentDictionary<Type, Func<JArray, object>> _arrayConverters =
+            new ConcurrentDictionary<Type, Func<JArray, object>>();
+
+        private static Dictionary<JTokenType, Type> _arrayTypeLookup = new Dictionary<JTokenType, Type>
+        {
+            { JTokenType.String, typeof(string) },
+            { JTokenType.Integer, typeof(int) },
+            { JTokenType.Boolean, typeof(bool) },
+            { JTokenType.Float, typeof(float) },
+            { JTokenType.Guid, typeof(Guid) },
+            { JTokenType.Object, typeof(object) },
+            { JTokenType.Date, typeof(DateTime) },
+            { JTokenType.TimeSpan, typeof(TimeSpan) },
+            { JTokenType.Uri, typeof(Uri) },
+        };
 
         /// <inheritdoc />
         public virtual IDictionary<string, object> LoadTempData([NotNull] HttpContext context)
@@ -44,6 +66,26 @@ namespace Microsoft.AspNet.Mvc
                 using (var writer = new BsonReader(memoryStream))
                 {
                     tempDataDictionary = _jsonSerializer.Deserialize<Dictionary<string, object>>(writer);
+                }
+                foreach (var item in tempDataDictionary.ToList())
+                {
+                    var jArrayValue = item.Value as JArray;
+                    if (jArrayValue != null && jArrayValue.Count > 0)
+                    {
+                        Type returnType = null;
+                        _arrayTypeLookup.TryGetValue(jArrayValue[0].Type, out returnType);
+                        if (returnType != null)
+                        {
+                            var arrayConverter = _arrayConverters.GetOrAdd(returnType, type =>
+                            {
+                                return (Func<JArray, object>)Delegate.CreateDelegate(typeof(Func<JArray, object>),
+                                    _convertArrayMethodInfo.MakeGenericMethod(type));
+                            });
+                            var result = arrayConverter(jArrayValue);
+
+                            tempDataDictionary[item.Key] = result;
+                        }
+                    }
                 }
 
                 // If we got it from Session, remove it so that no other request gets it
@@ -104,8 +146,7 @@ namespace Microsoft.AspNet.Mvc
             }
             else if (itemType.GetTypeInfo().IsGenericType)
             {
-                if (itemType.ExtractGenericInterface(typeof(IList<>)) != null ||
-                    itemType.ExtractGenericInterface(typeof(IDictionary<,>)) != null)
+                if (itemType.ExtractGenericInterface(typeof(IList<>)) != null)
                 {
                     actualTypes = itemType.GetGenericArguments();
                 }
@@ -123,6 +164,11 @@ namespace Microsoft.AspNet.Mvc
                     throw new InvalidOperationException(message);
                 }
             }
+        }
+
+        private static IList<TVal> ConvertArray<TVal>(JArray array)
+        {
+            return array.Values<TVal>().ToArray();
         }
     }
 }

@@ -86,9 +86,11 @@ namespace Microsoft.AspNet.Mvc
                     { new object[3], typeof(object) },
                     { new TestItem(), typeof(TestItem) },
                     { new List<TestItem>(), typeof(TestItem) },
-                    { new Dictionary<string, TestItem>(), typeof(TestItem) },
-                    { new Dictionary<object, string>(), typeof(object) },
-                    { new Dictionary<TestItem, TestItem>(), typeof(TestItem) }
+                    { new Dictionary<string, int>(), typeof(Dictionary<string, int>) },
+                    { new Dictionary<Uri, Guid>(), typeof(Dictionary<Uri, Guid>) },
+                    { new Dictionary<string, TestItem>(), typeof(Dictionary<string, TestItem>) },
+                    { new Dictionary<object, string>(), typeof(Dictionary<object, string>) },
+                    { new Dictionary<TestItem, TestItem>(), typeof(Dictionary<TestItem, TestItem>) }
                 };
             }
         }
@@ -118,13 +120,11 @@ namespace Microsoft.AspNet.Mvc
                     { 10 },
                     { new int[]{ 10, 20 } },
                     { "FooValue" },
-                    { new Dictionary<string, int>() },
                     { new Uri("http://Foo") },
                     { Guid.NewGuid() },
                     { new List<string> { "foo", "bar" } },
                     { new DateTimeOffset() },
                     { 100.1m },
-                    { new Dictionary<Uri, Guid>() },
                     { new Uri[] { new Uri("http://Foo"), new Uri("http://Bar") } }
                 };
             }
