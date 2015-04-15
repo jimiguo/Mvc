@@ -165,7 +165,8 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
                 });
             var client = server.CreateClient();
 
-             var expectedMessage = "A layout page cannot be rendered after 'FlushAsync' has been invoked.";
+             var expectedMessage = "A layout page cannot be rendered at " +
+                "'/Views/FlushPoint/PageWithFlushBeforeLayout.cshtml' after 'FlushAsync' has been invoked.";
 
             // Act
             var stream = await client.GetStreamAsync("http://localhost/FlushPoint/PageWithFlushBeforeLayout");

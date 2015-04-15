@@ -91,7 +91,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// A layout page cannot be rendered after '{0}' has been invoked.
+        /// A layout page cannot be rendered at '{0}' after '{1}' has been invoked.
         /// </summary>
         internal static string LayoutCannotBeRendered
         {
@@ -99,11 +99,11 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// A layout page cannot be rendered after '{0}' has been invoked.
+        /// A layout page cannot be rendered at '{0}' after '{1}' has been invoked.
         /// </summary>
-        internal static string FormatLayoutCannotBeRendered(object p0)
+        internal static string FormatLayoutCannotBeRendered(object p0, object p1)
         {
-            return string.Format(CultureInfo.CurrentCulture, GetString("LayoutCannotBeRendered"), p0);
+            return string.Format(CultureInfo.CurrentCulture, GetString("LayoutCannotBeRendered"), p0, p1);
         }
 
         /// <summary>
@@ -171,7 +171,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// You cannot flush while inside a writing scope.
+        /// You cannot flush while inside a writing scope. (Path: '{0}')
         /// </summary>
         internal static string RazorPage_YouCannotFlushWhileInAWritingScope
         {
@@ -179,11 +179,11 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// You cannot flush while inside a writing scope.
+        /// You cannot flush while inside a writing scope. (Path: '{0}')
         /// </summary>
-        internal static string FormatRazorPage_YouCannotFlushWhileInAWritingScope()
+        internal static string FormatRazorPage_YouCannotFlushWhileInAWritingScope(object p0)
         {
-            return GetString("RazorPage_YouCannotFlushWhileInAWritingScope");
+            return string.Format(CultureInfo.CurrentCulture, GetString("RazorPage_YouCannotFlushWhileInAWritingScope"), p0);
         }
 
         /// <summary>
@@ -251,7 +251,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// The section named '{0}' has already been rendered.
+        /// The section named '{0}' has already been rendered. (Path: '{1}')
         /// </summary>
         internal static string SectionAlreadyRendered
         {
@@ -259,11 +259,11 @@ namespace Microsoft.AspNet.Mvc.Razor
         }
 
         /// <summary>
-        /// The section named '{0}' has already been rendered.
+        /// The section named '{0}' has already been rendered. (Path: '{1}')
         /// </summary>
-        internal static string FormatSectionAlreadyRendered(object p0)
+        internal static string FormatSectionAlreadyRendered(object p0, object p1)
         {
-            return string.Format(CultureInfo.CurrentCulture, GetString("SectionAlreadyRendered"), p0);
+            return string.Format(CultureInfo.CurrentCulture, GetString("SectionAlreadyRendered"), p0, p1);
         }
 
         /// <summary>

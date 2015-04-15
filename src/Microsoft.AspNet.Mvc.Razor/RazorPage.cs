@@ -704,7 +704,7 @@ namespace Microsoft.AspNet.Mvc.Razor
         {
             if (_renderedSections.Contains(sectionName))
             {
-                var message = Resources.FormatSectionAlreadyRendered(sectionName);
+                var message = Resources.FormatSectionAlreadyRendered(sectionName, Path);
                 throw new InvalidOperationException(message);
             }
 
@@ -748,14 +748,14 @@ namespace Microsoft.AspNet.Mvc.Razor
             // change.
             if (_writerScopes.Count > 0)
             {
-                throw new InvalidOperationException(Resources.RazorPage_YouCannotFlushWhileInAWritingScope);
+                throw new InvalidOperationException(Resources.FormatRazorPage_YouCannotFlushWhileInAWritingScope(Path));
             }
 
             // Calls to Flush are allowed if the page does not specify a Layout or if it is executing a section in the
             // Layout.
             if (!IsLayoutBeingRendered && !string.IsNullOrEmpty(Layout))
             {
-                var message = Resources.FormatLayoutCannotBeRendered(nameof(FlushAsync));
+                var message = Resources.FormatLayoutCannotBeRendered(Path, nameof(FlushAsync));
                 throw new InvalidOperationException(message);
             }
 

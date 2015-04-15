@@ -107,6 +107,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var viewContext = CreateViewContext();
             var page = CreatePage(async v =>
             {
+                v.Path = "/Views/TestPath/Test.cshtml";
                 v.StartTagHelperWritingScope();
                 await v.FlushAsync();
             });
@@ -116,7 +117,7 @@ namespace Microsoft.AspNet.Mvc.Razor
                                 () => page.ExecuteAsync());
 
             // Assert
-            Assert.Equal("You cannot flush while inside a writing scope.", ex.Message);
+            Assert.Equal("You cannot flush while inside a writing scope. (Path: '/Views/TestPath/Test.cshtml')", ex.Message);
         }
 
         [Fact]
@@ -326,6 +327,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var expected = new HelperResult(action: null);
             var page = CreatePage(v =>
             {
+                v.Path = "/Views/TestPath/Test.cshtml";
                 v.RenderSection("header");
                 v.RenderSection("header");
             });
@@ -338,7 +340,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(page.ExecuteAsync);
 
             // Assert
-            Assert.Equal("The section named 'header' has already been rendered.", ex.Message);
+            Assert.Equal("The section named 'header' has already been rendered. (Path: '/Views/TestPath/Test.cshtml')", ex.Message);
         }
 
         [Fact]
@@ -348,6 +350,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var expected = new HelperResult(action: null);
             var page = CreatePage(async v =>
             {
+                v.Path = "/Views/TestPath/Test.cshtml";
                 await v.RenderSectionAsync("header");
                 await v.RenderSectionAsync("header");
             });
@@ -360,7 +363,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(page.ExecuteAsync);
 
             // Assert
-            Assert.Equal("The section named 'header' has already been rendered.", ex.Message);
+            Assert.Equal("The section named 'header' has already been rendered. (Path: '/Views/TestPath/Test.cshtml')", ex.Message);
         }
 
         [Fact]
@@ -370,6 +373,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var expected = new HelperResult(action: null);
             var page = CreatePage(async v =>
             {
+                v.Path = "/Views/TestPath/Test.cshtml";
                 v.RenderSection("header");
                 await v.RenderSectionAsync("header");
             });
@@ -382,7 +386,7 @@ namespace Microsoft.AspNet.Mvc.Razor
             var ex = await Assert.ThrowsAsync<InvalidOperationException>(page.ExecuteAsync);
 
             // Assert
-            Assert.Equal("The section named 'header' has already been rendered.", ex.Message);
+            Assert.Equal("The section named 'header' has already been rendered. (Path: '/Views/TestPath/Test.cshtml')", ex.Message);
         }
 
         [Fact]
@@ -566,11 +570,13 @@ namespace Microsoft.AspNet.Mvc.Razor
         public async Task FlushAsync_ThrowsIfTheLayoutHasBeenSet()
         {
             // Arrange
-            var expected = @"A layout page cannot be rendered after 'FlushAsync' has been invoked.";
+            var expected = "A layout page cannot be rendered at '/Views/TestPath/Test.cshtml'" +
+                " after 'FlushAsync' has been invoked.";
             var writer = new Mock<TextWriter>();
             var context = CreateViewContext(writer.Object);
             var page = CreatePage(async p =>
             {
+                p.Path = "/Views/TestPath/Test.cshtml";
                 p.Layout = "foo";
                 await p.FlushAsync();
             }, context);
