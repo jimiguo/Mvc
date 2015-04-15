@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using Microsoft.Framework.Internal;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -42,7 +43,7 @@ namespace Microsoft.AspNet.JsonPatch.Helpers
 
                                 // if property is of IList type then get the array index from splitPath and get the
                                 // object at the indexed position from the list.
-                                if (typeof(IList).GetTypeInfo().IsAssignableFrom(property.PropertyType.GetTypeInfo()))
+                                if (IsGenericListType(property.PropertyType))
                                 {
                                     var index = int.Parse(splitPath[++i]);
                                     targetObject = ((IList)targetObject)[index];
@@ -77,18 +78,33 @@ namespace Microsoft.AspNet.JsonPatch.Helpers
             }
         }
 
-        internal static Type GetEnumerableType(Type type)
+        internal static Type GetIListType([NotNull] Type type)
         {
-            if (type == null) throw new ArgumentNullException();
-            foreach (Type interfaceType in type.GetInterfaces())
+            if (IsGenericListType(type))
             {
-                if (interfaceType.GetTypeInfo().IsGenericType &&
-                    interfaceType.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                return type.GetGenericArguments()[0];
+            }
+
+            foreach (Type interfaceType in type.GetTypeInfo().ImplementedInterfaces)
+            {
+                if (IsGenericListType(interfaceType))
                 {
                     return interfaceType.GetGenericArguments()[0];
                 }
             }
+
             return null;
+        }
+
+        internal static bool IsGenericListType([NotNull] Type type)
+        {
+            if (type.GetTypeInfo().IsGenericType &&
+                    type.GetGenericTypeDefinition() == typeof(IList<>))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         internal static int GetNumericEnd(string path)

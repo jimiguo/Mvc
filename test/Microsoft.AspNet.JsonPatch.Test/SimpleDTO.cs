@@ -10,7 +10,6 @@ namespace Microsoft.AspNet.JsonPatch.Test
     public class SimpleDTO
     {
         public List<int> IntegerList { get; set; }
-        public IList GeneralList { get; set; }
         public IList<int> IntegerIList { get; set; }
         public int IntegerValue { get; set; }
         public string StringProperty { get; set; }
