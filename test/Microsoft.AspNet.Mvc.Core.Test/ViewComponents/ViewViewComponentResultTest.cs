@@ -4,12 +4,14 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Http.Core;
 using Microsoft.AspNet.Mvc.ModelBinding;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.Mvc.ViewComponents;
 using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
+using Microsoft.Framework.Logging;
 using Moq;
 using Xunit;
 
@@ -41,7 +43,7 @@ namespace Microsoft.AspNet.Mvc
             };
 
             var viewComponentContext = GetViewComponentContext(view.Object, viewData);
-
+            
             // Act
             result.Execute(viewComponentContext);
 
@@ -192,6 +194,10 @@ namespace Microsoft.AspNet.Mvc
             var serviceProvider = new Mock<IServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(ICompositeViewEngine)))
                 .Returns(viewEngine.Object);
+            serviceProvider.Setup(p => p.GetService(typeof(ILoggerFactory)))
+                .Returns(new NullLoggerFactory());
+            var httpContext = new Mock<HttpContext>();
+            httpContext.Setup(o => o.RequestServices).Returns(serviceProvider.Object);
 
             var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider());
 
@@ -201,7 +207,7 @@ namespace Microsoft.AspNet.Mvc
                 ViewData = viewData
             };
 
-            var viewComponentContext = GetViewComponentContext(view, viewData);
+            var viewComponentContext = GetViewComponentContext(view, viewData, httpContext.Object);
             viewComponentContext.ViewContext.HttpContext.RequestServices = serviceProvider.Object;
 
             // Act
@@ -258,6 +264,9 @@ namespace Microsoft.AspNet.Mvc
 
             var serviceProvider = new ServiceCollection().BuildServiceProvider();
 
+            var httpContext = new Mock<HttpContext>();
+            httpContext.Setup(o => o.RequestServices).Returns(serviceProvider);
+            
             var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider());
 
             var result = new ViewViewComponentResult
@@ -266,7 +275,7 @@ namespace Microsoft.AspNet.Mvc
                 ViewData = viewData
             };
 
-            var viewComponentContext = GetViewComponentContext(view, viewData);
+            var viewComponentContext = GetViewComponentContext(view, viewData, httpContext.Object);
             viewComponentContext.ViewContext.HttpContext.RequestServices = serviceProvider;
 
             // Act and Assert
@@ -297,9 +306,20 @@ namespace Microsoft.AspNet.Mvc
             viewEngine.Verify();
         }
 
-        private static ViewComponentContext GetViewComponentContext(IView view, ViewDataDictionary viewData)
+        private static ViewComponentContext GetViewComponentContext(
+            IView view, 
+            ViewDataDictionary viewData, 
+            HttpContext httpContext = null)
         {
-            var actionContext = new ActionContext(new DefaultHttpContext(), new RouteData(), new ActionDescriptor());
+            if(httpContext == null)
+            {
+                var mockHttpContext = new Mock<HttpContext>();
+                mockHttpContext.Setup(o => o.RequestServices.GetService(typeof(ILoggerFactory)))
+                           .Returns(new NullLoggerFactory());
+                httpContext = mockHttpContext.Object;
+            }
+
+            var actionContext = new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
             var viewContext = new ViewContext(actionContext, view, viewData, null, TextWriter.Null);
 
             var viewComponentDescriptor = new ViewComponentDescriptor()

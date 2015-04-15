@@ -1099,7 +1099,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
                       metadataProvider,
                       new Mock<IHtmlEncoder>(MockBehavior.Strict).Object,
                       new Mock<IUrlEncoder>(MockBehavior.Strict).Object,
-                      new Mock<IJavaScriptStringEncoder>(MockBehavior.Strict).Object)
+                      new Mock<IJavaScriptStringEncoder>(MockBehavior.Strict).Object,
+                      new NullLoggerFactory())
             {
             }
 

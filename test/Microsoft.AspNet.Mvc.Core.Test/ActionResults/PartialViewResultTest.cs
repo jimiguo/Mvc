@@ -3,9 +3,11 @@
 
 using System;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Http.Core;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.AspNet.Routing;
+using Microsoft.Framework.Logging;
 using Moq;
 using Xunit;
 
@@ -21,7 +23,7 @@ namespace Microsoft.AspNet.Mvc
                                        "The view 'MyView' was not found. The following locations were searched:",
                                        "Location1",
                                        "Location2.");
-            var actionContext = new ActionContext(new DefaultHttpContext(),
+            var actionContext = new ActionContext(GetHttpContext(),
                                                   new RouteData(),
                                                   new ActionDescriptor());
             var viewEngine = new Mock<IViewEngine>();
@@ -47,7 +49,7 @@ namespace Microsoft.AspNet.Mvc
         {
             // Arrange
             var viewName = "myview";
-            var context = new ActionContext(new DefaultHttpContext(), new RouteData(), new ActionDescriptor());
+            var context = new ActionContext(GetHttpContext(), new RouteData(), new ActionDescriptor());
             var viewEngine = new Mock<IViewEngine>();
             var view = Mock.Of<IView>();
 
@@ -73,7 +75,7 @@ namespace Microsoft.AspNet.Mvc
         {
             // Arrange
             var viewName = "some-view-name";
-            var context = new ActionContext(new DefaultHttpContext(),
+            var context = new ActionContext(GetHttpContext(),
                                             new RouteData(),
                                             new ActionDescriptor { Name = viewName });
             var viewEngine = new Mock<ICompositeViewEngine>();
@@ -109,6 +111,8 @@ namespace Microsoft.AspNet.Mvc
             var serviceProvider = new Mock<IServiceProvider>();
             serviceProvider.Setup(p => p.GetService(typeof(ICompositeViewEngine)))
                            .Returns(viewEngine.Object);
+            serviceProvider.Setup(p => p.GetService(typeof(ILoggerFactory)))
+                           .Returns(new NullLoggerFactory());
             context.HttpContext.RequestServices = serviceProvider.Object;
 
             var viewResult = new PartialViewResult
@@ -121,6 +125,18 @@ namespace Microsoft.AspNet.Mvc
 
             // Assert
             viewEngine.Verify();
+        }
+
+        private HttpContext GetHttpContext()
+        {
+            var serviceProvider = new Mock<IServiceProvider>();
+            serviceProvider.Setup(s => s.GetService(typeof(ILoggerFactory)))
+                .Returns(new NullLoggerFactory());
+
+            var httpContext = new DefaultHttpContext();
+            httpContext.RequestServices = serviceProvider.Object;
+
+            return httpContext;
         }
     }
 }

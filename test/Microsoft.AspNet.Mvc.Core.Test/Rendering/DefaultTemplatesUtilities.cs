@@ -204,7 +204,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 provider,
                 new HtmlEncoder(),
                 new UrlEncoder(),
-                new JavaScriptStringEncoder());
+                new JavaScriptStringEncoder(),
+                new NullLoggerFactory());
             if (innerHelperWrapper != null)
             {
                 innerHelper = innerHelperWrapper(innerHelper);
@@ -219,7 +220,8 @@ namespace Microsoft.AspNet.Mvc.Rendering
                 provider,
                 new HtmlEncoder(),
                 new UrlEncoder(),
-                new JavaScriptStringEncoder());
+                new JavaScriptStringEncoder(),
+                new NullLoggerFactory());
             var viewContext = new ViewContext(actionContext, Mock.Of<IView>(), viewData, null, new StringWriter());
             htmlHelper.Contextualize(viewContext);
 
