@@ -32,9 +32,9 @@ namespace Microsoft.AspNet.Mvc.Rendering
 
         private readonly IHtmlGenerator _htmlGenerator;
         private readonly ICompositeViewEngine _viewEngine;
+        private readonly ILogger _logger;
 
         private ViewContext _viewContext;
-        private readonly ILogger _logger;
         
         /// <summary>
         /// Initializes a new instance of the <see cref="HtmlHelper"/> class.

@@ -3,11 +3,11 @@
 
 using System;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc.Core;
 using Microsoft.AspNet.Mvc.Rendering;
 using Microsoft.Framework.Internal;
-using Microsoft.Framework.Logging;
 
 namespace Microsoft.AspNet.Mvc.ViewComponents
 {
@@ -17,18 +17,15 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
         private readonly IViewComponentInvokerFactory _invokerFactory;
         private readonly IViewComponentSelector _selector;
         private ViewContext _viewContext;
-        private readonly ILogger _logger;
 
         public DefaultViewComponentHelper(
             [NotNull] IViewComponentDescriptorCollectionProvider descriptorProvider,
             [NotNull] IViewComponentSelector selector,
-            [NotNull] IViewComponentInvokerFactory invokerFactory,
-            [NotNull] ILoggerFactory loggerFactory)
+            [NotNull] IViewComponentInvokerFactory invokerFactory)
         {
             _descriptorProvider = descriptorProvider;
             _selector = selector;
             _invokerFactory = invokerFactory;
-            _logger = loggerFactory.CreateLogger<DefaultViewComponentHelper>();
         }
 
         public void Contextualize([NotNull] ViewContext viewContext)
@@ -109,13 +106,7 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
             var descriptor = _selector.SelectComponent(name);
             if (descriptor == null)
             {
-                _logger.LogError("The view component with name '{ViewComponentName}' was not found.", name);
-
                 throw new InvalidOperationException(Resources.FormatViewComponent_CannotFindComponent(name));
-            }
-            else
-            {
-                _logger.LogVerbose("The view component with name '{ViewComponentName}' was found successfully.", name);
             }
 
             return descriptor;
@@ -128,17 +119,9 @@ namespace Microsoft.AspNet.Mvc.ViewComponents
             {
                 if (descriptor.Type == componentType)
                 {
-                    _logger.LogError(
-                        "The view component of type '{ViewComponentTypeName}' was found successfully.",
-                        componentType.FullName);
-
                     return descriptor;
                 }
             }
-
-            _logger.LogError(
-                "The view component of type '{ViewComponentTypeName}' was not found.", 
-                componentType.FullName);
 
             throw new InvalidOperationException(Resources.FormatViewComponent_CannotFindComponent(
                 componentType.FullName));
