@@ -105,8 +105,8 @@ namespace Microsoft.AspNet.Mvc
                        .Returns(mockContextAccessor.Object);
             httpContext.Setup(o => o.RequestServices.GetService(typeof(IOptions<MvcOptions>)))
                 .Returns(optionsAccessor);
-            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILoggerFactory)))
-                .Returns(new NullLoggerFactory());
+            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILogger<ObjectResult>)))
+                .Returns(new Mock<ILogger<ObjectResult>>().Object);
 
             return new ActionContext(httpContext.Object, new RouteData(), new ActionDescriptor());
         }

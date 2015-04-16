@@ -1996,8 +1996,8 @@ namespace Microsoft.AspNet.Mvc
             httpContext.SetupGet(c => c.Response).Returns(httpResponse);
             httpContext.Setup(o => o.RequestServices.GetService(typeof(ITempDataDictionary)))
                        .Returns(tempData);
-            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILoggerFactory)))
-                       .Returns(new NullLoggerFactory());
+            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILogger<ObjectResult>)))
+                       .Returns(new Mock<ILogger<ObjectResult>>().Object);
             httpResponse.Body = new MemoryStream();
 
             var options = new MvcOptions();

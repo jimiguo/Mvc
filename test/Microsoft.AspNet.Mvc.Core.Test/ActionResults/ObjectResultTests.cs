@@ -17,7 +17,6 @@ using Microsoft.Framework.Logging;
 using Microsoft.Framework.OptionsModel;
 using Microsoft.Net.Http.Headers;
 using Moq;
-using Newtonsoft.Json.Utilities;
 using Xunit;
 
 namespace Microsoft.AspNet.Mvc.Core.Test.ActionResults
@@ -898,8 +897,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test.ActionResults
             optionsAccessor.Options.RespectBrowserAcceptHeader = respectBrowserAcceptHeader;
             httpContext.Setup(o => o.RequestServices.GetService(typeof(IOptions<MvcOptions>)))
                 .Returns(optionsAccessor);
-            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILoggerFactory)))
-                .Returns(new NullLoggerFactory());
+            httpContext.Setup(o => o.RequestServices.GetService(typeof(ILogger<ObjectResult>)))
+                .Returns(new Mock<ILogger<ObjectResult>>().Object);
 
             var mockActionBindingContext = new Mock<IScopedInstance<ActionBindingContext>>();
 

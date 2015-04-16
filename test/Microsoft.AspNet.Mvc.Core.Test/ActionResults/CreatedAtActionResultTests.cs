@@ -102,8 +102,8 @@ namespace Microsoft.AspNet.Mvc
             optionsAccessor.Options.OutputFormatters.Add(new JsonOutputFormatter());
             services.Setup(p => p.GetService(typeof(IOptions<MvcOptions>)))
                 .Returns(optionsAccessor);
-            services.Setup(p => p.GetService(typeof(ILoggerFactory)))
-                .Returns(new NullLoggerFactory());
+            services.Setup(s => s.GetService(typeof(ILogger<ObjectResult>)))
+                       .Returns(new Mock<ILogger<ObjectResult>>().Object);
 
             var mockContextAccessor = new Mock<IScopedInstance<ActionBindingContext>>();
             mockContextAccessor

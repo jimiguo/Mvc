@@ -96,8 +96,8 @@ namespace Microsoft.AspNet.Mvc
                 .Setup(p => p.RequestServices.GetService(typeof(IOptions<MvcOptions>)))
                 .Returns(optionsAccessor);
             httpContext
-                .Setup(p => p.RequestServices.GetService(typeof(ILoggerFactory)))
-                .Returns(new NullLoggerFactory());
+                .Setup(p => p.RequestServices.GetService(typeof(ILogger<ObjectResult>)))
+                .Returns(new Mock<ILogger<ObjectResult>>().Object);
 
             var mockActionBindingContext = new Mock<IScopedInstance<ActionBindingContext>>();
             mockActionBindingContext

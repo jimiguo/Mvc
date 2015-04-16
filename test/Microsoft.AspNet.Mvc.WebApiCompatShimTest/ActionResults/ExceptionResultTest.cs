@@ -11,7 +11,6 @@ using Microsoft.AspNet.Routing;
 using Microsoft.AspNet.WebUtilities;
 using Microsoft.Framework.DependencyInjection;
 using Microsoft.Framework.Logging;
-using Microsoft.Framework.Logging.Testing;
 using Microsoft.Framework.OptionsModel;
 using Moq;
 using Xunit;
@@ -88,8 +87,8 @@ namespace System.Web.Http
             services.Setup(s => s.GetService(typeof(IOptions<MvcOptions>)))
                 .Returns(optionsAccessor.Object);
 
-            services.Setup(s => s.GetService(typeof(ILoggerFactory)))
-                .Returns(new NullLoggerFactory());
+            services.Setup(s => s.GetService(typeof(ILogger<ObjectResult>)))
+                .Returns(new Mock<ILogger<ObjectResult>>().Object);
 
             return services.Object;
         }

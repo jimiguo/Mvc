@@ -40,16 +40,11 @@ namespace Microsoft.AspNet.Mvc
 
         public override async Task ExecuteResultAsync(ActionContext context)
         {
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>()
-                .CreateLogger<ObjectResult>();
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<ObjectResult>>();
                             
             // See if the list of content types added to this object result is valid.
             ThrowIfUnsupportedContentType();
             var formatters = GetDefaultFormatters(context);
-
-            logger.LogVerbose(
-                "Available output formatters for writing the response: {OutputFormatters}",
-                formatters.Select(f => f.GetType().FullName));
 
             var formatterContext = new OutputFormatterContext()
             {
@@ -69,9 +64,11 @@ namespace Microsoft.AspNet.Mvc
                 return;
             }
 
-            logger.LogInformation(
-                "Selected output formatter '{OutputFormatter}' to write the response.", 
-                selectedFormatter.GetType().FullName);
+            logger.LogVerbose(
+                "Selected output formatter '{OutputFormatter}'and content type " +
+                "'{ContentType}' to write the response.", 
+                selectedFormatter.GetType().FullName,
+                formatterContext.SelectedContentType);
 
             if (StatusCode.HasValue)
             {
@@ -87,15 +84,14 @@ namespace Microsoft.AspNet.Mvc
             IEnumerable<IOutputFormatter> formatters)
         {
             var logger = formatterContext.ActionContext.HttpContext.RequestServices
-                .GetRequiredService<ILoggerFactory>()
-                .CreateLogger<ObjectResult>();
+                .GetRequiredService<ILogger<ObjectResult>>();
 
             // Check if any content-type was explicitly set (for example, via ProducesAttribute 
             // or Url path extension mapping). If yes, then ignore content-negotiation and use this content-type.
             if (ContentTypes.Count == 1)
             {
                 logger.LogVerbose(
-                    "Skipped content-negotiation as content type '{ContentType}' is explicitly set for the response.", 
+                    "Skipped content negotiation as content type '{ContentType}' is explicitly set for the response.", 
                     ContentTypes[0]);
 
                 return SelectFormatterUsingAnyAcceptableContentType(formatterContext,
@@ -116,7 +112,7 @@ namespace Microsoft.AspNet.Mvc
                     out requestContentType);
                 if (!sortedAcceptHeaderMediaTypes.Any() && requestContentType == null)
                 {
-                    logger.LogVerbose("No information found on request to perform content-negotiation.");
+                    logger.LogVerbose("No information found on request to perform content negotiation.");
 
                     return SelectFormatterBasedOnTypeMatch(formatterContext, formatters);
                 }
@@ -147,7 +143,7 @@ namespace Microsoft.AspNet.Mvc
                 // fallback on type based match.
                 if (selectedFormatter == null)
                 {
-                    logger.LogVerbose("Could not find an output formatter based on content-negotiation.");
+                    logger.LogVerbose("Could not find an output formatter based on content negotiation.");
 
                     // Set this flag to indicate that content-negotiation has failed to let formatters decide
                     // if they want to write the response or not.
