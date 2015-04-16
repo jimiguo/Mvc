@@ -29,19 +29,18 @@ namespace Microsoft.AspNet.Mvc
             });
 
         private static readonly MethodInfo _convertArrayMethodInfo = typeof(SessionStateTempDataProvider).GetMethod(
-            nameof(ConvertArray), BindingFlags.NonPublic | BindingFlags.Static, null, new[] { typeof(JArray) }, null);
+            nameof(ConvertArray), BindingFlags.Static | BindingFlags.NonPublic);
 
-        private readonly ConcurrentDictionary<Type, Func<JArray, object>> _arrayConverters =
+        private static readonly ConcurrentDictionary<Type, Func<JArray, object>> _arrayConverters =
             new ConcurrentDictionary<Type, Func<JArray, object>>();
 
-        private static Dictionary<JTokenType, Type> _arrayTypeLookup = new Dictionary<JTokenType, Type>
+        private static readonly Dictionary<JTokenType, Type> _arrayTypeLookup = new Dictionary<JTokenType, Type>
         {
             { JTokenType.String, typeof(string) },
             { JTokenType.Integer, typeof(int) },
             { JTokenType.Boolean, typeof(bool) },
             { JTokenType.Float, typeof(float) },
             { JTokenType.Guid, typeof(Guid) },
-            { JTokenType.Object, typeof(object) },
             { JTokenType.Date, typeof(DateTime) },
             { JTokenType.TimeSpan, typeof(TimeSpan) },
             { JTokenType.Uri, typeof(Uri) },
@@ -67,26 +66,32 @@ namespace Microsoft.AspNet.Mvc
                 {
                     tempDataDictionary = _jsonSerializer.Deserialize<Dictionary<string, object>>(writer);
                 }
-                foreach (var item in tempDataDictionary.ToList())
+
+                var convertedDictionary = new Dictionary<string, object>(tempDataDictionary, StringComparer.OrdinalIgnoreCase);
+                foreach (var item in tempDataDictionary)
                 {
                     var jArrayValue = item.Value as JArray;
                     if (jArrayValue != null && jArrayValue.Count > 0)
                     {
-                        Type returnType = null;
-                        _arrayTypeLookup.TryGetValue(jArrayValue[0].Type, out returnType);
-                        if (returnType != null)
+                        Type returnType;
+                        if (_arrayTypeLookup.TryGetValue(jArrayValue[0].Type, out returnType))
                         {
                             var arrayConverter = _arrayConverters.GetOrAdd(returnType, type =>
                             {
-                                return (Func<JArray, object>)Delegate.CreateDelegate(typeof(Func<JArray, object>),
-                                    _convertArrayMethodInfo.MakeGenericMethod(type));
+                                return (Func<JArray, object>)_convertArrayMethodInfo.MakeGenericMethod(type).CreateDelegate(typeof(Func<JArray, object>));
                             });
                             var result = arrayConverter(jArrayValue);
 
-                            tempDataDictionary[item.Key] = result;
+                            convertedDictionary[item.Key] = result;
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Cannot deserialize JArray type " + jArrayValue[0].Type);
                         }
                     }
                 }
+
+                tempDataDictionary = convertedDictionary;
 
                 // If we got it from Session, remove it so that no other request gets it
                 session.Remove(TempDataSessionStateKey);
